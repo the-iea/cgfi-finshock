@@ -1,0 +1,41 @@
+{
+	"name": "vue3-skeleton",
+	"version": "1.1.0",
+	"description": "Example Vue 3 App",
+	"scripts": {
+		"dev": "vite --config vite.config.ts",
+		"build": "vue-tsc --noEmit --project ./src/ && vite --config vite.config.ts build",
+		"test": "jest"
+	},
+	"author": "Guy Griffiths",
+	"license": "ISC",
+	"devDependencies": {
+		"@types/d3": "^7.4.0",
+		"@types/js-cookie": "^3.0.3",
+		"@types/leaflet": "^1.9.3",
+		"@types/papaparse": "^5.3.7",
+		"@typescript-eslint/parser": "^6.18.1",
+		"@vitejs/plugin-vue": "^5.0.3",
+		"eslint": "^8.38.0",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-plugin-vue": "^9.11.0",
+		"prettier": "^3.1.1",
+		"sass": "^1.62.0",
+		"sass-loader": "^13.2.2",
+		"typescript": "^5.0.4",
+		"vite": "^5.0.11",
+		"vue-tsc": "^1.4.2"
+	},
+	"dependencies": {
+		"@vue-leaflet/vue-leaflet": "^0.10.1",
+		"d3": "^7.8.4",
+		"date-fns": "^3.2.0",
+		"js-cookie": "^3.0.1",
+		"leaflet": "^1.9.4",
+		"papaparse": "^5.4.1",
+		"pinia": "^2.0.35",
+		"vue": "^3.2.47",
+		"vue-router": "^4.1.6",
+		"vue3-loading-overlay": "^0.0.0"
+	}
+}
