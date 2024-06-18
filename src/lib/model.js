@@ -155,6 +155,7 @@ function iterateModel(Ae, X, L, Le, R, k, a, b, EVol, Type, Time) {
 		} else {
 			throw new Error('Unknown Type specified.')
 		}
+		effectiveAssetVals.push([...OIntVal])
 
 		// The definition of the new value for equity is:
 		//
@@ -172,10 +173,21 @@ function iterateModel(Ae, X, L, Le, R, k, a, b, EVol, Type, Time) {
 				Le[i],
 		)
 		eqVals.push([...E])
-		effectiveAssetVals.push([...OIntVal])
 		// console.log(Le)
 		iteration++
 	}
+	// Once more, so we can save the final effective asset values
+	OE = [...E]
+	if (Type === 'Distress') {
+		OIntVal = IntVal(L, Le, OE, k, R, a, b)
+	} else if (Type === 'Merton') {
+		OIntVal = Merton(Ae, OE, R, EVol, Time)
+	} else if (Type === 'Black') {
+		OIntVal = BlackCox(Ae, OE, R, EVol, Time)
+	} else {
+		throw new Error('Unknown Type specified.')
+	}
+	effectiveAssetVals.push([...OIntVal])
 
 	if (iteration >= max_iterations) {
 		console.warn('Maximum iterations reached without convergence.')

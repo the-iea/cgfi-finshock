@@ -86,3 +86,7 @@ input[type='radio'] {
 		animation-name: fadeIn;
 	}
 }
+
+input {
+	background-color: $bgContrast;
+}

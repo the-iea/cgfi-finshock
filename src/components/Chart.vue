@@ -1,46 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref, Ref, computed, watch } from 'vue'
 import { useStore } from '@/store/store'
-// import { scaleLinear } from 'd3'
 import * as d3 from 'd3'
 import { runModel } from '@/lib/model'
+import * as math from 'mathjs'
+import { M } from 'vite/dist/node/types.d-aGj9QkWt'
 
 const store = useStore()
-const results = runModel(
-	store.extAssets,
-	store.extLiabilities,
-	store.liabilityMatrix,
-	store.shock,
-)
-const equityOuts = results.eqVals
-const effectiveVals = results.effectiveAssetVals
-console.log(
-	'model run',
-	equityOuts[0].map((val, i) => val - equityOuts[equityOuts.length - 1][i]),
-	equityOuts,
-	effectiveVals,
-)
-
-const gradTo = 'red'
-const gradFrom = 'darkturquoise'
-
-let resultI = 0
-const equities = equityOuts[resultI].map((equity: number) => {
-	return {
-		value: equity,
-	}
-})
-const maxVal = Math.max(...equities.map((e) => e.value))
-let sim
-const clicky = () => {
-	console.log(resultI, equityOuts.length)
-	resultI = (resultI + 1) % equityOuts.length
-	equities.forEach((equity, i) => {
-		equity.value = equityOuts[resultI][i]
-	})
-	sim.nodes(equities)
-	// draw()
-}
+store.rerunModel()
 
 const chartRef = ref(null) as unknown as Ref<HTMLElement>
 
@@ -53,161 +20,324 @@ const margin = ref({
 	left: 20,
 })
 
+const totalSteps = store.equityOuts.length
+const stepLength = computed(() => {
+	// return 10000 // store.equityOuts.length
+	const maxStepLength = 500 // maximum step length for the first iteration
+	const minStepLength = 50 // minimum step length for the final iteration
+
+	// Exponential decay formula
+	const stepLength =
+		maxStepLength * Math.exp(-2.5 * ((store.modelI - 1) / totalSteps))
+
+	// Ensure step length is not below the minimum step length
+	return Math.max(stepLength, minStepLength)
+})
+
+const maxEquity = Math.max(...store.equityOuts[store.modelI])
+const maxEquityBarHeight = computed(
+	() => Math.min(width.value, height.value) * 0.25,
+)
+const eScale = d3
+	.scaleLinear()
+	.domain([0, maxEquity])
+	.range([0, maxEquityBarHeight.value])
+
+const allColors = [
+	...d3.schemeSet3,
+	...d3.schemeTableau10,
+	...d3.schemeSet1,
+	...d3.schemeDark2,
+]
+const color = (index: number) => allColors[index % allColors.length]
+
+const running = ref(false)
+const clicky = () => {
+	store.modelI = 0
+	running.value = true
+
+	const runFunc = () => {
+		store.modelI++
+		if (store.modelI >= store.equityOuts.length - 1) {
+			setTimeout(() => {
+				store.modelI = 0
+				draw()
+				running.value = false
+			}, stepLength.value * 5)
+		} else {
+			draw()
+			console.log(
+				'step',
+				store.modelI,
+				store.equityOuts.length - 1,
+				'length',
+				stepLength.value,
+			)
+			setTimeout(runFunc, stepLength.value)
+		}
+	}
+	runFunc()
+
+	// Update the result index every 0.5s until we reach the end
+	// const interval = setInterval(() => {
+	// 	store.modelI++
+	// 	console.log('Step', store.modelI, store.equityOuts.length - 1)
+	// 	if (store.modelI >= store.equityOuts.length - 1) {
+	// 		clearInterval(interval)
+	// 		setTimeout(() => {
+	// 			store.modelI = 0
+	// 			draw()
+	// 			running.value = false
+	// 		}, stepLength.value * 5)
+	// 	} else {
+	// 		draw()
+	// 	}
+	// }, stepLength.value)
+}
+
 function setSizes(resizing: boolean) {
 	if (!resizing) {
 		return
 	}
-	// getBoundingClientRect since some browsers (eg FireFox) have 0 clientWidth/clientHeight
 	if (chartRef) {
 		let rect = chartRef.value.getBoundingClientRect()
 		width.value = rect.width - margin.value.left - margin.value.right
 		height.value = rect.height - margin.value.top - margin.value.bottom
 	}
-	draw()
 }
 
-const links: any[] = []
-let maxLink = 0
-store.liabilityMatrix.forEach((row, i) =>
-	row.forEach((l, j) => {
-		if (l == 0) {
-			return
-		}
-		if (l > maxLink) {
-			maxLink = l
-		}
-		links.push({
-			source: i,
-			target: j,
-			value: l,
-			from: i >= j,
-		})
-	}),
+const innerRadius = computed(
+	() => Math.min(width.value, height.value) * 0.25 - 5,
 )
-maxLink /= 3
+const chord = d3
+	.chordDirected()
+	.sortSubgroups(() => 0)
+	.sortChords(d3.descending)
+const gap = 4
+const arc = d3
+	.arc()
+	.innerRadius(() => innerRadius.value)
+	.outerRadius(
+		(_, i) =>
+			Math.max(0, eScale(store.equityOuts[store.modelI][i])) +
+			innerRadius.value +
+			gap,
+	)
+const ribbon = d3
+	.ribbonArrow()
+	.radius(() => innerRadius.value - 0.5)
+	.padAngle(() => 3 / (innerRadius.value * store.nNodes))
 
-function drag(simulation: any): any {
-	function dragstarted(event: any) {
-		if (!event.active) simulation.alphaTarget(0.3).restart()
-		event.subject.fx = event.subject.x
-		event.subject.fy = event.subject.y
+const shockArc = d3
+	.arc()
+	.innerRadius((_, i) =>
+		store.shock[i] >= 0
+			? Math.max(0, eScale(0.1 + store.equityOuts[0][i] - store.shock[i])) +
+				innerRadius.value +
+				gap
+			: Math.max(0, eScale(store.equityOuts[store.modelI][i])) +
+				innerRadius.value +
+				gap,
+	)
+	.outerRadius((_, i) =>
+		store.shock[i] >= 0
+			? Math.max(0, eScale(store.equityOuts[store.modelI][i])) +
+				innerRadius.value +
+				gap
+			: Math.max(0, eScale(0.1 + store.equityOuts[0][i] - store.shock[i])) +
+				innerRadius.value +
+				gap,
+	)
+	.startAngle((d) => d.startAngle)
+	.endAngle((d) => d.endAngle)
+
+const fillFunc = (d: any) => {
+	if (store.equityOuts[store.modelI][d.index] < 0) {
+		return '#df2828'
+	} else {
+		return color(d.index)
 	}
-
-	function dragged(event: any) {
-		event.subject.fx = event.x
-		event.subject.fy = event.y
-	}
-
-	function dragended(event: any) {
-		if (!event.active) simulation.alphaTarget(0)
-		event.subject.fx = null
-		event.subject.fy = null
-	}
-
-	return d3
-		.drag()
-		.on('start', dragstarted)
-		.on('drag', dragged)
-		.on('end', dragended)
 }
-
+const shockFillFunc = (_: any, i: number) => {
+	if (store.modelI < 3) {
+		if (store.shock[i] > 0) return '#df2828'
+		if (store.shock[i] < 0) return '#28df28'
+	}
+	return 'none'
+}
+let chords: any = undefined
 function draw() {
-	const transitionDuration = 5000
-	const resizing = false
-	// Draws the bars, transitioning if it's an update
 	const graphContainer = d3.select(chartRef.value).select('#graph')
-	const sizefunc = (d) => 5 + (Math.abs(d.value) * 10) / maxVal
-	// const distfunc = (d) => {
-	// 	// console.log(d, i, effectiveVals, effectiveVals[0])
-	// 	return (30 * maxLink) / (d.value * effectiveVals[resultI][d.source.index])
-	// }
-	const strengthfunc = (d) => {
-		return d.value / maxLink
-	}
+	graphContainer.attr(
+		'transform',
+		`translate(${width.value / 2}, ${height.value / 2})`,
+	)
 
-	function ticked() {
-		// link
-		// 	.attr('x1', (d) => d.source.x)
-		// 	.attr('y1', (d) => d.source.y)
-		// 	.attr('x2', (d) => d.target.x)
-		// 	.attr('y2', (d) => d.target.y)
+	eScale.range([0, maxEquityBarHeight.value])
+	chord.padAngle(12 / (innerRadius.value * store.nNodes))
 
-		link.attr('d', (d) => {
-			const dx = d.target.x - d.source.x
-			const dy = d.target.y - d.source.y
-			const dr = 5 * Math.sqrt(dx * dx + dy * dy)
+	chords = chord(store.liabilityMatrix)
+	chords.forEach((chord) => {
+		// Now go through and reduce the target angle spans, such that the
+		// end of the arrow represents the *effective* value of the liability
+		const t = chord.target
+		let tspan = t.endAngle - t.startAngle
+		if (tspan < 0) {
+			tspan += 2 * Math.PI
+		}
+		const tdiff =
+			(1.0 - store.effectiveValues[store.modelI][chord.source.index]) * tspan
+		t.startAngle += tdiff / 2
+		t.endAngle -= tdiff / 2
+		if (t.endAngle < 0) {
+			t.endAngle += 2 * Math.PI
+		}
+		if (t.startAngle > 2 * Math.PI) {
+			t.startAngle -= 2 * Math.PI
+		}
+	})
 
-			return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`
-		})
-
-		node.attr('cx', (d) => d.x).attr('cy', (d) => d.y)
-	}
-
-	const simulation = d3
-		.forceSimulation(equities)
-		.force(
-			'link',
-			d3
-				.forceLink(links)
-				.strength(strengthfunc)
-				.distance((d) => 300),
+	graphContainer
+		.datum(chords)
+		.selectAll('path.chord')
+		.data(
+			(chords) => chords,
+			(d: any) => d.source.index + '-' + d.target.index,
 		)
-		// .force('charge', d3.forceManyBody())
-		.force('center', d3.forceCenter(width.value / 2, height.value / 2))
-		.force('collide', d3.forceCollide().radius(sizefunc))
-		.on('tick', ticked)
+		.join(
+			(enter) =>
+				enter
+					.append('path')
+					.classed('chord', true)
+					.attr('fill', (d) => color(d.source.index))
+					// @ts-ignore
+					.attr('d', ribbon)
+					.on('click', (e, d) => {
+						store.selectedNode = d.source.index
+					})
+					.call((enter) =>
+						enter
+							.append('title')
+							.text(
+								(d) =>
+									`${d.source.index} owes ${d.target.index} ${d.source.value}`,
+							),
+					),
+			(update) =>
+				update
+					.attr('fill', (d) => color(d.source.index))
+					.call((update) =>
+						update
+							.transition()
+							.duration(stepLength.value / 3)
+							// @ts-ignore
+							.attr('d', ribbon),
+					),
+		)
 
-	const link = graphContainer
-		.selectAll('path')
-		.data(links)
-		.join('path')
-		// .attr('stroke', (d) => (d.from ? 'red' : 'blue'))
-		.attr('stroke', (d) => (d.from ? 'url(#gradient1)' : 'url(#gradient2)'))
-		.attr('stroke-width', (d) => 0.5 + (d.value / maxLink) * 2.5)
-		.attr('fill', 'none')
-
-	const node = graphContainer
-		.selectAll('circle')
-		.data(equities)
-		.join('circle')
-		.attr('r', sizefunc)
-		.attr('fill', (d) => (d.value > 0 ? 'darkturquoise' : 'red'))
-		.call(drag(simulation))
-	return simulation
+	const g = graphContainer.select('#bars')
+	g.selectAll('path.bar')
+		.data(chords.groups)
+		.join(
+			(enter) =>
+				enter
+					.append('path')
+					// @ts-ignore
+					.attr('d', arc)
+					.classed('bar', true)
+					.classed('highlight', (d) => d.index == store.selectedNode)
+					.attr('fill', fillFunc)
+					.on('click', (e, d) => (store.selectedNode = d.index))
+					.append('title')
+					.text(
+						(d) =>
+							`${d.index} has ${store.equityOuts[store.modelI][d.index]} equity`,
+					),
+			(update) =>
+				update
+					.transition()
+					.duration(stepLength.value / 3)
+					.attr('fill', fillFunc)
+					// @ts-ignore
+					.attr('d', arc)
+					.select('title')
+					.text(
+						(d) =>
+							`${d.index} has ${store.equityOuts[store.modelI][d.index]} equity`,
+					),
+		)
+	g.selectAll('path.shockbar')
+		.data(chords.groups)
+		.join(
+			(enter) =>
+				enter
+					.append('path')
+					// @ts-ignore
+					.attr('d', shockArc)
+					.classed('shockbar', true)
+					.attr('fill', shockFillFunc)
+					.on('click', (e, d) => (store.selectedNode = d.index)),
+			(update) =>
+				update
+					.transition()
+					.duration(stepLength.value / 3)
+					// @ts-ignore
+					.attr('d', shockArc)
+					.transition()
+					.delay(stepLength.value / 3)
+					.attr('fill', shockFillFunc),
+		)
 }
 
-const dummy = false
+function drawHighlight() {
+	const graphContainer = d3.select(chartRef.value).select('#graph')
+	const g = graphContainer.select('#bars')
+
+	g.selectAll('path.bar')
+		.data(chords.groups)
+
+		.join(
+			(enter) => enter,
+			(update) =>
+				update.classed('highlight', (d) => d.index == store.selectedNode),
+		)
+}
 
 watch(
-	() => [dummy],
+	() => [store.equities, ...store.shock],
 	() => {
-		console.log('redrawing')
-		draw()
+		if (!store.updating) {
+			console.log('Rerunning model')
+			store.rerunModel()
+			draw()
+		}
 	},
 )
-
+watch(
+	() => store.selectedNode,
+	() => {
+		drawHighlight()
+	},
+)
 onMounted(() => {
 	setSizes(true)
-	window.addEventListener('resize', () => setSizes(true))
+	draw()
+	window.addEventListener('resize', () => {
+		setSizes(true)
+		draw()
+	})
 })
 </script>
 
 <template>
-	<div class="chart">
-		<svg class="chart-svg" ref="chartRef">
-			<g id="graph" :transform="`translate(${margin.left}, ${margin.top})`"></g>
-			<defs>
-				<linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
-					<stop offset="0%" :stop-color="gradTo" />
-					<stop offset="100%" :stop-color="gradFrom" />
-				</linearGradient>
-				<linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-					<stop offset="0%" stop-color="purple" />
-					<stop offset="100%" stop-color="orange" />
-				</linearGradient>
-			</defs>
+	<div class="chart" ref="chartRef">
+		<svg class="chart-svg">
+			<g id="graph">
+				<g id="bars"></g>
+			</g>
 		</svg>
-		<button @click="clicky">Click me</button>
+		<button @click="clicky" :disabled="running">Introduce shock</button>
+		<div class="info"></div>
 	</div>
 </template>
 
@@ -222,17 +352,26 @@ onMounted(() => {
 	.chart-svg {
 		flex: 1 1 100%;
 		background-color: $bgContrast;
-		// height: 100%;
+		height: 100%;
 
-		.bar {
-			fill: $highlight;
-			stroke: black;
+		.shockbar,
+		.bar,
+		.chord {
+			fill-opacity: 0.75;
 			stroke: none;
-			stroke-width: 0.1;
+			// }
 
-			&.selected {
-				fill: $primary;
+			// .shockbar,
+			// .bar {
+			cursor: pointer;
+
+			&.highlight {
+				fill-opacity: 0.85;
 			}
+		}
+		.bar.highlight {
+			stroke-width: 1px;
+			stroke: white;
 		}
 	}
 

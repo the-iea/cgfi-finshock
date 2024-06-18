@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useLabels } from '@/lib/labels'
 import { useStore } from '@/store/store'
 import Chart from '@/components/Chart.vue'
+import ControlPanel from '@/components/ControlPanel.vue'
 
 const $l = useLabels()
 const store = useStore()
@@ -18,9 +19,8 @@ onMounted(async () => {
 
 <template>
 	<div class="main">
-		<h1>{{ $l.mainTitle }}</h1>
-		<p>Information from the store: {{ store.value }}</p>
-		<Chart></Chart>
+		<Chart id="chart"></Chart>
+		<ControlPanel id="controls"></ControlPanel>
 	</div>
 </template>
 
@@ -29,6 +29,14 @@ onMounted(async () => {
 
 .main {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
+
+	#chart {
+		flex: 1 1 70%;
+	}
+
+	#controls {
+		flex: 1 1 30%;
+	}
 }
 </style>
