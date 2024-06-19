@@ -4,7 +4,7 @@
 	"description": "Example Vue 3 App",
 	"scripts": {
 		"dev": "vite --config vite.config.ts",
-		"build": "vue-tsc --noEmit --project ./src/ && vite --config vite.config.ts build",
+		"build": "vue-tsc --noEmit --project ./ && vite --config vite.config.ts build",
 		"deploy": "npm run build && rm -Rf docs/assets && cp -r dist/* docs && cp dist/index.html docs/404.html && git add docs"
 	},
 	"author": "Guy Griffiths",
@@ -21,7 +21,7 @@
 		"prettier": "^3.1.1",
 		"sass": "^1.62.0",
 		"sass-loader": "^13.2.2",
-		"typescript": "^5.0.4",
+		"typescript": "^5.4.5",
 		"vite": "^5.0.11",
 		"vue-tsc": "^1.4.2"
 	},

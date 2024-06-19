@@ -2,9 +2,6 @@
 import { onMounted, ref, Ref, computed, watch } from 'vue'
 import { useStore } from '@/store/store'
 import * as d3 from 'd3'
-import { runModel } from '@/lib/model'
-import * as math from 'mathjs'
-import { M } from 'vite/dist/node/types.d-aGj9QkWt'
 
 const store = useStore()
 store.rerunModel()

@@ -1,3 +1,4 @@
+// @ts-ignore
 import { getEquities, runModel } from '@/lib/model'
 import { defineStore } from 'pinia'
 
