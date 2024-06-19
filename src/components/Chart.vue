@@ -31,13 +31,13 @@ const stepLength = computed(() => {
 	return Math.max(stepLength, minStepLength)
 })
 
-const maxEquity = Math.max(...store.equityOuts[store.modelI])
+const maxEquity = computed(() => Math.max(...store.equityOuts.flat()))
 const maxEquityBarHeight = computed(
 	() => Math.min(width.value, height.value) * 0.25,
 )
 const eScale = d3
 	.scaleLinear()
-	.domain([0, maxEquity])
+	.domain([0, maxEquity.value])
 	.range([0, maxEquityBarHeight.value])
 
 const allColors = [
@@ -55,23 +55,23 @@ const startAnimation = () => {
 	}
 
 	store.animating = true
-
 	const runFunc = () => {
 		if (!store.animating) return
 
 		store.modelI++
+		draw()
 		if (store.modelI >= store.equityOuts.length - 1) {
-			setTimeout(() => {
-				store.modelI = 0
-				draw()
-				store.animating = false
-			}, stepLength.value * 5)
+			store.animating = false
 		} else {
-			draw()
 			setTimeout(runFunc, stepLength.value)
 		}
 	}
-	runFunc()
+	if (store.modelI >= store.equityOuts.length - 1) {
+		store.modelI = 0
+		draw()
+	}
+
+	setTimeout(runFunc, stepLength.value)
 }
 
 function setSizes(resizing: boolean) {
@@ -138,7 +138,7 @@ const fillFunc = (d: any) => {
 	}
 }
 const shockFillFunc = (_: any, i: number) => {
-	if (store.modelI < 3) {
+	if (store.modelI <= 0) {
 		if (store.shock[i] > 0) return '#df2828'
 		if (store.shock[i] < 0) return '#28df28'
 	}
@@ -153,6 +153,7 @@ function draw() {
 		`translate(${width.value / 2}, ${height.value / 2})`,
 	)
 
+	eScale.domain([0, maxEquity.value])
 	eScale.range([0, maxEquityBarHeight.value])
 	chord.padAngle(12 / (innerRadius.value * store.nNodes))
 
@@ -292,7 +293,7 @@ function drawHighlight() {
 }
 
 watch(
-	() => [store.equities, ...store.shock],
+	() => [store.equities, ...store.shock, store.valueFunc],
 	() => {
 		if (!store.updating) {
 			console.log('Rerunning model')

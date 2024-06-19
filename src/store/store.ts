@@ -7,7 +7,7 @@ interface State {
 	extLiabilities: number[]
 	shock: number[]
 	liabilityMatrix: number[][]
-	modelType: 'Distress' | 'Merton' | 'Black'
+	valueFunc: 'Distress' | 'Merton' | 'Black'
 	selectedNode: number
 	equityOuts: number[][]
 	effectiveValues: number[][]
@@ -93,7 +93,7 @@ export const useStore = defineStore('main', {
 			liabilityMatrix,
 			equityOuts: [],
 			effectiveValues: [],
-			modelType: 'Distress',
+			valueFunc: 'Distress',
 			selectedNode: 0,
 			modelI: 0,
 			animating: false,
@@ -135,7 +135,7 @@ export const useStore = defineStore('main', {
 				this.extLiabilities,
 				this.liabilityMatrix,
 				this.shock,
-				this.modelType,
+				this.valueFunc,
 			)
 			this.equityOuts = results.eqVals
 			this.effectiveValues = results.effectiveAssetVals

@@ -15,6 +15,7 @@ const labelsEn = {
 	shock: 'Shock',
 	extAsset: 'Ext. assets',
 	extLiability: 'Ext. liabilities',
+	valueFunc: 'Valuation function',
 	equityIs: 'Equity is',
 	e404Title: 'Page not found',
 	e404: 'The page you are looking for does not exist, please navigate to another page using the menus at the top of the page.',

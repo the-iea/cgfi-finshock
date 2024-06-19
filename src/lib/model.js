@@ -28,24 +28,7 @@ function IntVal(L, EL, OE, k, R, a, b) {
 	)
 	Frac = Frac.map((val) => (isFinite(val) ? val : 0))
 	Frac = Frac.map((val) => (isNaN(val) ? 0 : val))
-	// console.log(
-	// 	'running inval, L',
-	// 	L,
-	// 	'EL',
-	// 	EL,
-	// 	'OE',
-	// 	OE,
-	// 	'k',
-	// 	k,
-	// 	'R',
-	// 	R,
-	// 	'a',
-	// 	a,
-	// 	'b',
-	// 	b,
-	// 	'Frac',
-	// 	Frac,
-	// )
+
 	return Frac.map((frac, i) => {
 		if (k[i] === 0) {
 			return frac >= 1 ? 1 : 0

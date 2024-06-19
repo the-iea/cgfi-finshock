@@ -99,6 +99,15 @@ onMounted(async () => {
 				v-model="store.extLiabilities[store.selectedNode]"
 			/>
 		</div>
+		<div class="spacer" />
+		<div class="control">
+			<label for="valueFunc">{{ $l.valueFunc }}</label>
+			<select class="ui" id="valueFunc" v-model="store.valueFunc">
+				<option value="Distress">Distress</option>
+				<option value="Merton">Merton</option>
+				<option value="Black">Black</option>
+			</select>
+		</div>
 	</div>
 </template>
 
