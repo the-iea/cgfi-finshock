@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "vite --config vite.config.ts",
 		"build": "vue-tsc --noEmit --project ./src/ && vite --config vite.config.ts build",
-		"test": "jest"
+		"deploy": "npm run build && rm -Rf docs/assets && cp -r dist/* docs && cp dist/index.html docs/404.html && git add docs"
 	},
 	"author": "Guy Griffiths",
 	"license": "ISC",

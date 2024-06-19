@@ -51,48 +51,30 @@ const allColors = [
 ]
 const color = (index: number) => allColors[index % allColors.length]
 
-const running = ref(false)
-const clicky = () => {
-	store.modelI = 0
-	running.value = true
+const startAnimation = () => {
+	if (store.animating) {
+		store.animating = false
+		return
+	}
+
+	store.animating = true
 
 	const runFunc = () => {
+		if (!store.animating) return
+
 		store.modelI++
 		if (store.modelI >= store.equityOuts.length - 1) {
 			setTimeout(() => {
 				store.modelI = 0
 				draw()
-				running.value = false
+				store.animating = false
 			}, stepLength.value * 5)
 		} else {
 			draw()
-			console.log(
-				'step',
-				store.modelI,
-				store.equityOuts.length - 1,
-				'length',
-				stepLength.value,
-			)
 			setTimeout(runFunc, stepLength.value)
 		}
 	}
 	runFunc()
-
-	// Update the result index every 0.5s until we reach the end
-	// const interval = setInterval(() => {
-	// 	store.modelI++
-	// 	console.log('Step', store.modelI, store.equityOuts.length - 1)
-	// 	if (store.modelI >= store.equityOuts.length - 1) {
-	// 		clearInterval(interval)
-	// 		setTimeout(() => {
-	// 			store.modelI = 0
-	// 			draw()
-	// 			running.value = false
-	// 		}, stepLength.value * 5)
-	// 	} else {
-	// 		draw()
-	// 	}
-	// }, stepLength.value)
 }
 
 function setSizes(resizing: boolean) {
@@ -165,7 +147,8 @@ const shockFillFunc = (_: any, i: number) => {
 	}
 	return 'none'
 }
-let chords: any = undefined
+
+let chords: d3.Chords
 function draw() {
 	const graphContainer = d3.select(chartRef.value).select('#graph')
 	graphContainer.attr(
@@ -242,8 +225,10 @@ function draw() {
 			(enter) =>
 				enter
 					.append('path')
-					// @ts-ignore
-					.attr('d', arc)
+					.attr(
+						'd',
+						arc as unknown as d3.ValueFn<SVGPathElement, d3.ChordGroup, string>,
+					)
 					.classed('bar', true)
 					.classed('highlight', (d) => d.index == store.selectedNode)
 					.attr('fill', fillFunc)
@@ -272,8 +257,14 @@ function draw() {
 			(enter) =>
 				enter
 					.append('path')
-					// @ts-ignore
-					.attr('d', shockArc)
+					.attr(
+						'd',
+						shockArc as unknown as d3.ValueFn<
+							SVGPathElement,
+							d3.ChordGroup,
+							string
+						>,
+					)
 					.classed('shockbar', true)
 					.attr('fill', shockFillFunc)
 					.on('click', (e, d) => (store.selectedNode = d.index)),
@@ -335,8 +326,60 @@ onMounted(() => {
 			<g id="graph">
 				<g id="bars"></g>
 			</g>
+			<!-- <g id="legend">
+				<text x="10" :y="height - 20" fill="white">
+					Step {{ store.modelI + 1 }} / {{ store.equityOuts.length }}
+				</text>
+			</g> -->
 		</svg>
-		<button @click="clicky" :disabled="running">Introduce shock</button>
+		<div class="buttons">
+			<p class="label">
+				Step {{ store.modelI + 1 }} / {{ store.equityOuts.length }}
+			</p>
+			<button
+				@click="
+					() => {
+						store.modelI = 0
+						draw()
+					}
+				"
+			>
+				⏮
+			</button>
+			<button
+				@click="
+					() => {
+						store.prevModelI()
+						draw()
+					}
+				"
+			>
+				⏴⏴
+			</button>
+			<button @click="startAnimation">
+				{{ store.animating ? '⏸' : '⏵' }}
+			</button>
+			<button
+				@click="
+					() => {
+						store.nextModelI()
+						draw()
+					}
+				"
+			>
+				⏵⏵
+			</button>
+			<button
+				@click="
+					() => {
+						store.modelI = store.equityOuts.length - 1
+						draw()
+					}
+				"
+			>
+				⏭
+			</button>
+		</div>
 		<div class="info"></div>
 	</div>
 </template>
@@ -378,6 +421,31 @@ onMounted(() => {
 	.spacer {
 		flex-basis: 0 0 32px;
 		background-color: green;
+	}
+
+	.buttons {
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+
+		.label {
+			position: absolute;
+			left: 1rem;
+		}
+
+		button {
+			flex: 0 1 10%;
+			height: 3rem;
+			font-size: 1.5rem;
+			color: white;
+			border: none;
+			cursor: pointer;
+
+			&:hover {
+				background-color: $bg;
+			}
+		}
 	}
 }
 </style>

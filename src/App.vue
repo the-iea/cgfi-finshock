@@ -19,7 +19,7 @@ onMounted(() => {
 	<loading :active="store.isLoading" :isFullPage="true" id="loading"></loading>
 	<AppHeader id="header" />
 	<router-view id="main"></router-view>
-	<AppFooter id="footer" />
+	<!-- <AppFooter id="footer" /> -->
 </template>
 
 <style lang="scss">
@@ -33,8 +33,10 @@ onMounted(() => {
 	max-height: 100vh;
 	display: grid;
 	grid-template-columns: 100%;
-	grid-template-rows: $headerHeight + $gap 1fr $footerHeight + $gap;
-	grid-template-areas: 'header' 'main' 'footer';
+	grid-template-rows: $headerHeight + $gap 1fr;
+	grid-template-areas: 'header' 'main';
+	// grid-template-rows: $headerHeight + $gap 1fr $footerHeight + $gap;
+	// grid-template-areas: 'header' 'main' 'footer';
 
 	#loading {
 		width: 100vw;
@@ -50,12 +52,13 @@ onMounted(() => {
 	#main {
 		grid-area: main;
 		// Constrains certain badly-behaved elements
-		max-height: calc(100vh - $headerHeight - $footerHeight - 2 * $gap);
+		// max-height: calc(100vh - $headerHeight - $footerHeight - 2 * $gap);
+		max-height: calc(100vh - $headerHeight - $gap);
 		padding: 1rem;
 	}
 
-	#footer {
-		grid-area: footer;
-	}
+	// #footer {
+	// 	grid-area: footer;
+	// }
 }
 </style>

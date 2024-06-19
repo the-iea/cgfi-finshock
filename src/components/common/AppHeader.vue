@@ -8,9 +8,9 @@ const $l = useLabels()
 <template>
 	<header>
 		<div id="header-title">{{ $l.title }}</div>
-		<div id="header-menu">
+		<!-- <div id="header-menu">
 			<router-link :to="{ name: 'Main' }">{{ $l.main }}</router-link>
-		</div>
+		</div> -->
 	</header>
 </template>
 
@@ -25,7 +25,7 @@ header {
 	padding-bottom: $gap;
 
 	#header-title {
-		font-size: 2.5rem;
+		font-size: 2rem;
 		font-weight: 900;
 		color: $primary;
 		margin-left: 1rem;

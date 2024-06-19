@@ -11,6 +11,7 @@ interface State {
 	equityOuts: number[][]
 	effectiveValues: number[][]
 	modelI: number
+	animating: boolean
 	lang: string
 	loadingCount: number
 	updating: boolean
@@ -94,6 +95,7 @@ export const useStore = defineStore('main', {
 			modelType: 'Distress',
 			selectedNode: 0,
 			modelI: 0,
+			animating: false,
 			loadingCount: 0,
 			lang: 'en',
 			updating: false,
@@ -119,6 +121,12 @@ export const useStore = defineStore('main', {
 		setLoadingDone() {
 			this.loadingCount--
 		},
+		prevModelI() {
+			this.modelI = Math.max(0, this.modelI - 1)
+		},
+		nextModelI() {
+			this.modelI = Math.min(this.equityOuts.length - 1, this.modelI + 1)
+		},
 		rerunModel() {
 			this.setLoading()
 			const results = runModel(
@@ -130,6 +138,8 @@ export const useStore = defineStore('main', {
 			)
 			this.equityOuts = results.eqVals
 			this.effectiveValues = results.effectiveAssetVals
+			if (this.modelI >= this.equityOuts.length)
+				this.modelI = this.equityOuts.length - 1
 			this.setLoadingDone()
 		},
 		addNode() {

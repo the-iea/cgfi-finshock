@@ -19,7 +19,7 @@ onMounted(async () => {
 </script>
 
 <template>
-	<div class="controls">
+	<div class="controls" :class="{ disabled: store.animating }">
 		<div class="control">
 			<label for="node">{{ $l.selNode }}</label>
 			<select class="ui" id="node" v-model="store.selectedNode">
@@ -50,7 +50,7 @@ onMounted(async () => {
 		>
 			<label :for="'owes' + i"> {{ i - 1 }}</label>
 			<input
-				class="ui"
+				class="ui lmat"
 				:id="'owes' + i"
 				type="number"
 				min="0"
@@ -58,7 +58,7 @@ onMounted(async () => {
 				v-model="store.liabilityMatrix[store.selectedNode][i - 1]"
 			/>
 			<input
-				class="ui"
+				class="ui lmat"
 				:id="'owed' + i"
 				type="number"
 				min="0"
@@ -66,6 +66,7 @@ onMounted(async () => {
 				v-model="store.liabilityMatrix[i - 1][store.selectedNode]"
 			/>
 		</div>
+		<div class="spacer"></div>
 		<div class="control">
 			<label for="shock">{{ $l.shock }}</label>
 			<input
@@ -109,29 +110,50 @@ onMounted(async () => {
 	flex-direction: column;
 	overflow-y: scroll;
 
+	&.disabled {
+		pointer-events: none;
+		opacity: 0.8;
+	}
+
 	.control {
+		align-items: center;
 		display: flex;
 		flex-direction: row;
 
 		label {
-			flex: 1 0 30%;
+			flex: 1 0 20%;
 		}
 
 		.ui {
-			flex: 1 1 100%;
+			flex: 1 1 70%;
+			min-width: 0;
+
+			&.lmat {
+				flex: 1 1 35%;
+			}
 		}
 	}
 
 	.spacer {
-		flex: 1 1 100%;
+		flex: 0 0 1rem;
 	}
 
 	button.addremove {
-		flex: 0 0 1.75rem;
-		height: 1.75rem;
-		align-self: center;
-		// border-radius: 0;
-		margin: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		border: none;
+		border-radius: 3px;
+		background-color: $buttonColor;
+		color: $textColor;
+		font-size: 1.5rem;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+		&:hover {
+			background-color: #999;
+		}
 	}
 }
 </style>
