@@ -370,7 +370,7 @@ onMounted(() => {
 					}
 				"
 			>
-				⏮
+				<fa-icon icon="backward-fast"></fa-icon>
 			</button>
 			<button
 				@click="
@@ -381,10 +381,10 @@ onMounted(() => {
 					}
 				"
 			>
-				⏴⏴
+				<fa-icon icon="backward-step"></fa-icon>
 			</button>
 			<button @click="startAnimation">
-				{{ store.animating ? '⏸' : '⏵' }}
+				<fa-icon :icon="store.animating ? 'pause' : 'play'"></fa-icon>
 			</button>
 			<button
 				@click="
@@ -395,7 +395,7 @@ onMounted(() => {
 					}
 				"
 			>
-				⏵⏵
+				<fa-icon icon="forward-step"></fa-icon>
 			</button>
 			<button
 				@click="
@@ -406,7 +406,7 @@ onMounted(() => {
 					}
 				"
 			>
-				⏭
+				<fa-icon icon="forward-fast"></fa-icon>
 			</button>
 		</div>
 		<div class="info"></div>
