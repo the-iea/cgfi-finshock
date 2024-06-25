@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLabels } from '@/lib/labels'
 import { useStore } from '@/store/store'
@@ -16,10 +16,28 @@ onMounted(async () => {
 		store.liabilityMatrix,
 	)
 })
+
+const controlsRef = ref<HTMLElement | null>(null)
+
+watch(
+	() => [store.selectedLiability],
+	() => {
+		if (store.selectedLiability) {
+			const el = document.getElementById(
+				`owes${store.selectedLiability.to + 1}`,
+			) as HTMLInputElement
+			el.focus()
+		}
+	},
+)
 </script>
 
 <template>
-	<div class="controls" :class="{ disabled: store.animating }">
+	<div
+		ref="controlsRef"
+		class="controls"
+		:class="{ disabled: store.animating }"
+	>
 		<div class="control">
 			<label for="node">{{ $l.selNode }}</label>
 			<select class="ui" id="node" v-model="store.selectedNode">
@@ -56,6 +74,10 @@ onMounted(async () => {
 				min="0"
 				step="10"
 				v-model="store.liabilityMatrix[store.selectedNode][i - 1]"
+				@focus="
+					store.selectedLiability = { from: store.selectedNode, to: i - 1 }
+				"
+				@blur="store.selectedLiability = null"
 			/>
 			<input
 				class="ui lmat"
@@ -64,6 +86,10 @@ onMounted(async () => {
 				min="0"
 				step="10"
 				v-model="store.liabilityMatrix[i - 1][store.selectedNode]"
+				@focus="
+					store.selectedLiability = { to: store.selectedNode, from: i - 1 }
+				"
+				@blur="store.selectedLiability = null"
 			/>
 		</div>
 		<div class="spacer"></div>

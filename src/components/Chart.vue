@@ -190,11 +190,22 @@ function draw() {
 				enter
 					.append('path')
 					.classed('chord', true)
+					.classed(
+						'highlight',
+						(d) =>
+							store.selectedLiability !== null &&
+							d.source.index === store.selectedLiability.from &&
+							d.target.index === store.selectedLiability.to,
+					)
 					.attr('fill', (d) => color(d.source.index))
 					// @ts-ignore
 					.attr('d', ribbon)
 					.on('click', (e, d) => {
 						store.selectedNode = d.source.index
+						store.selectedLiability = {
+							from: d.source.index,
+							to: d.target.index,
+						}
 					})
 					.call((enter) =>
 						enter
@@ -280,11 +291,24 @@ function draw() {
 
 function drawHighlight() {
 	const graphContainer = d3.select(chartRef.value).select('#graph')
-	const g = graphContainer.select('#bars')
+	graphContainer
+		.selectAll('path.chord')
+		.data(chords)
+		.join(
+			(enter) => enter,
+			(update) =>
+				update.classed(
+					'highlight',
+					(d) =>
+						store.selectedLiability !== null &&
+						d.source.index === store.selectedLiability.from &&
+						d.target.index === store.selectedLiability.to,
+				),
+		)
 
+	const g = graphContainer.select('#bars')
 	g.selectAll('path.bar')
 		.data(chords.groups)
-
 		.join(
 			(enter) => enter,
 			(update) =>
@@ -303,7 +327,15 @@ watch(
 	},
 )
 watch(
-	() => store.selectedNode,
+	() => {
+		let ls
+		if (store.selectedLiability) {
+			ls = [store.selectedLiability.from, store.selectedLiability.to]
+		} else {
+			ls = [null, null]
+		}
+		return [store.selectedNode, ...ls]
+	},
 	() => {
 		drawHighlight()
 	},
@@ -319,16 +351,11 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="chart" ref="chartRef">
-		<svg class="chart-svg">
+	<div class="chart">
+		<svg class="chart-svg" ref="chartRef">
 			<g id="graph">
 				<g id="bars"></g>
 			</g>
-			<!-- <g id="legend">
-				<text x="10" :y="height - 20" fill="white">
-					Step {{ store.modelI + 1 }} / {{ store.equityOuts.length }}
-				</text>
-			</g> -->
 		</svg>
 		<div class="buttons">
 			<p class="label">
@@ -338,6 +365,7 @@ onMounted(() => {
 				@click="
 					() => {
 						store.modelI = 0
+						store.animating = false
 						draw()
 					}
 				"
@@ -348,6 +376,7 @@ onMounted(() => {
 				@click="
 					() => {
 						store.prevModelI()
+						store.animating = false
 						draw()
 					}
 				"
@@ -361,6 +390,7 @@ onMounted(() => {
 				@click="
 					() => {
 						store.nextModelI()
+						store.animating = false
 						draw()
 					}
 				"
@@ -371,6 +401,7 @@ onMounted(() => {
 				@click="
 					() => {
 						store.modelI = store.equityOuts.length - 1
+						store.animating = false
 						draw()
 					}
 				"
@@ -408,11 +439,9 @@ onMounted(() => {
 
 			&.highlight {
 				fill-opacity: 0.85;
+				stroke-width: 1px;
+				stroke: white;
 			}
-		}
-		.bar.highlight {
-			stroke-width: 1px;
-			stroke: white;
 		}
 	}
 

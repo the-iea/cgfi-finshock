@@ -9,6 +9,7 @@ interface State {
 	liabilityMatrix: number[][]
 	valueFunc: 'Distress' | 'Merton' | 'Black'
 	selectedNode: number
+	selectedLiability: { to: number; from: number } | null
 	equityOuts: number[][]
 	effectiveValues: number[][]
 	modelI: number
@@ -74,16 +75,16 @@ export const useStore = defineStore('main', {
 		const extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 		const shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
 		const liabilityMatrix = [
-			[0, 51.01, 0, 0, 0, 20, 50, 0, 0, 0],
-			[0, 0, 50.002, 0, 0, 0, 0, 0, 0, 0],
-			[0, 50, 0, 50.003, 0, 0, 0, 0, 0, 0],
-			[0, 0, 0, 0, 50.004, 0, 0, 0, 0, 0],
-			[0, 0, 0, 0, 0, 50.005, 0, 50.01, 0, 0],
-			[0, 0, 0, 0, 0, 0, 30.006, 49.95, 49.97, 0],
-			[0, 0, 0, 0, 0, 0, 0, 50.007, 50.013, 50.014],
-			[0, 0, 0, 0, 0, 0, 0, 0, 50.008, 50.015],
-			[0, 0, 0, 0, 0, 0, 0, 0, 0, 50.009],
-			[50.016, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
+			[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
+			[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
+			[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
+			[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
+			[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
+			[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 		]
 
 		const s: State = {
@@ -95,6 +96,7 @@ export const useStore = defineStore('main', {
 			effectiveValues: [],
 			valueFunc: 'Distress',
 			selectedNode: 0,
+			selectedLiability: { to: 1, from: 0 },
 			modelI: 0,
 			animating: false,
 			loadingCount: 0,
@@ -155,6 +157,7 @@ export const useStore = defineStore('main', {
 			this.extAssets.push(100)
 		},
 		removeNode() {
+			if (this.extAssets.length <= 1) return
 			this.updating = true
 			this.extLiabilities.pop()
 			this.shock.pop()
