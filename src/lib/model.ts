@@ -1,27 +1,30 @@
 // Required packages (need to be installed separately in Node.js environment)
 import * as math from 'mathjs'
 // import jStat from 'jstat'
-import { normal, beta } from 'jstat'
-
-// Colour nodes by valuation function results
-// Size nodes by equity
+import { beta, normal } from 'jstat'
 
 // Helper function for matrix sum along rows
-function rowSums(matrix) {
+function rowSums(matrix: number[][]) {
 	return matrix.map((row) => row.reduce((sum, val) => sum + val, 0))
 }
 
 // Helper function for element-wise operations
-function elementWiseOperation(array, callback) {
+function elementWiseOperation(
+	array: number[],
+	callback: (val: number, i: number) => number,
+) {
 	return array.map(callback)
 }
 
-// Valuation functions
-function DeltaDiff(Rcsh, REL, RL, RAInt) {
-	return REL + rowSums(RL) - (Rcsh + RAInt)
-}
-
-function IntVal(L, EL, OE, k, R, a, b) {
+function IntVal(
+	L: number[][],
+	EL: number[],
+	OE: number[],
+	k: number[],
+	R: number,
+	a: number,
+	b: number,
+) {
 	let Frac = elementWiseOperation(
 		OE,
 		(val, i) => 1 + val / (rowSums(L)[i] + EL[i]),
@@ -43,7 +46,13 @@ function IntVal(L, EL, OE, k, R, a, b) {
 	})
 }
 
-function Merton(Ae, OE2, R, vol, maturity) {
+function Merton(
+	Ae: number[],
+	OE2: number[],
+	R: number,
+	vol: number,
+	maturity: number,
+) {
 	let lev = OE2.map((val, i) => val / Ae[i])
 
 	let vals = lev.map((lev) => {
@@ -61,7 +70,13 @@ function Merton(Ae, OE2, R, vol, maturity) {
 	return ret
 }
 
-function BlackCox(ExtA, OE2, R, vol, maturity) {
+function BlackCox(
+	ExtA: number[],
+	OE2: number[],
+	R: number,
+	vol: number,
+	maturity: number,
+) {
 	let Lev = OE2.map((val, i) => val / ExtA[i])
 	let Val = Lev.map((lev) => {
 		if (lev >= 1) return 1
@@ -89,7 +104,19 @@ function BlackCox(ExtA, OE2, R, vol, maturity) {
 }
 
 // Main function
-function iterateModel(Ae, X, L, Le, R, k, a, b, EVol, Type, Time) {
+function iterateModel(
+	Ae: number[],
+	X: number[],
+	L: number[][],
+	Le: number[],
+	R: number,
+	k: number[],
+	a: number,
+	b: number,
+	EVol: number,
+	Type: string,
+	Time: number,
+) {
 	/*
 	 * Ae: External assets
 	 * X: Shock
@@ -179,7 +206,11 @@ function iterateModel(Ae, X, L, Le, R, k, a, b, EVol, Type, Time) {
 	return { eqVals, effectiveAssetVals }
 }
 
-export function getEquities(extAssets, extLiabilities, liabilityMatrix) {
+export function getEquities(
+	extAssets: number[],
+	extLiabilities: number[],
+	liabilityMatrix: number[][],
+) {
 	return extAssets.map(
 		(val, i) =>
 			val +
@@ -190,10 +221,10 @@ export function getEquities(extAssets, extLiabilities, liabilityMatrix) {
 }
 
 export function runModel(
-	extAssets,
-	extLiabilities,
-	liabilityMatrix,
-	shock,
+	extAssets: number[],
+	extLiabilities: number[],
+	liabilityMatrix: number[][],
+	shock: number[],
 	type = 'Distress',
 	R = 1,
 	a = 1,
@@ -220,23 +251,4 @@ export function runModel(
 		type,
 		time,
 	)
-}
-
-export function toy() {
-	// Toy Example
-	const extAssets = [20, 10, 10] // external assets
-	const shock = [5, 0, 0] // Shock
-	const liabilityMatrix = [
-		[0, 10, 0],
-		[0, 0, 10],
-		[0, 0, 0],
-	] // liabilities matrix
-	const Le = [0, 0, 0] // external liabilities
-	const results = runModel(extAssets, shock, liabilityMatrix, Le)
-
-	console.log(
-		'model run',
-		results[0].map((val, i) => val - results[results.length - 1][i]),
-		results,
-	) // equity losses from change in initial and last equity
 }
