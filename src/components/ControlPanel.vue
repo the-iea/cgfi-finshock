@@ -49,10 +49,10 @@ watch(
 			<button class="addremove" @click="store.removeNode">-</button>
 		</div>
 		<div class="control">
-			<p>
+			<!-- <p>
 				{{ $l.equityIs }}:
 				{{ store.equityOuts[store.modelI][store.selectedNode].toFixed(3) }}
-			</p>
+			</p> -->
 		</div>
 		<!-- <div class="spacer"></div> -->
 		<div class="control">

@@ -8,7 +8,7 @@ export default defineConfig(({ command, mode }) => {
 	process.env = { ...process.env, ...loadEnv(mode, process.cwd(), ENV_PREFIX) }
 	return {
 		build: {
-			outDir: './dist'
+			outDir: './dist',
 		},
 		envPrefix: ENV_PREFIX,
 		resolve: {

@@ -1,5 +1,5 @@
-// @ts-ignore
-import { getEquities, runModel } from '@/lib/model'
+import { getEquities } from '@/lib/model'
+import worker from '@/lib/worker'
 import { defineStore } from 'pinia'
 
 interface State {
@@ -30,38 +30,59 @@ function mulberry32(a: number) {
 
 const getRand = mulberry32(12345)
 
+const randomiseInputs = (nodes: number) => {
+	const extAssets = []
+	const extLiabilities = []
+	const shock = []
+	const liabilityMatrix = []
+	for (let i = 0; i < nodes; i++) {
+		extAssets.push(getRand() * 100)
+		extLiabilities.push(0)
+		shock.push(getRand() < 3 / nodes ? 200 : 2)
+		const lRow = []
+		for (let j = 0; j < nodes; j++) {
+			if (i != j && getRand() < 0.1) lRow.push(getRand() * 10)
+			else lRow.push(0)
+		}
+		liabilityMatrix.push(lRow)
+	}
+	return { extAssets, extLiabilities, shock, liabilityMatrix }
+}
+
 export const useStore = defineStore('main', {
 	state: (): State => {
-		// const extAssets = [20, 10, 10]
-		// const extLiabilities = [0, 0, 0]
-		// const shock = [5, 0, 0]
-		// const liabilityMatrix = [
-		// 	[0, 10, 0],
-		// 	[0, 0, 10],
-		// 	[0, 0, 0],
+		let extAssets: number[]
+		let extLiabilities: number[]
+		let shock: number[]
+		let liabilityMatrix: number[][]
+
+		const randInputs = randomiseInputs(100)
+		extAssets = randInputs.extAssets
+		extLiabilities = randInputs.extLiabilities
+		shock = randInputs.shock
+		liabilityMatrix = randInputs.liabilityMatrix
+
+		// Contrived example of emergent disaster
+		// extAssets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+		// extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+		// shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
+		// liabilityMatrix = [
+		// 	[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
+		// 	[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
+		// 	[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
+		// 	[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
+		// 	[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
+		// 	[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
+		// 	[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
+		// 	[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
+		// 	[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
+		// 	[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 		// ]
 
-		// const extAssets = []
-		// const extLiabilities = []
-		// const shock = []
-		// const liabilityMatrix = []
-		// const nodes = 8
-		// for (let i = 0; i < nodes; i++) {
-		// 	extAssets.push(getRand() * 100)
-		// 	extLiabilities.push(0)
-		// 	shock.push(getRand() < 3 / nodes ? 200 : 2)
-		// 	const lRow = []
-		// 	for (let j = 0; j < nodes; j++) {
-		// 		if (i != j && getRand() < 0.1) lRow.push(getRand() * 10)
-		// 		else lRow.push(0)
-		// 	}
-		// 	liabilityMatrix.push(lRow)
-		// }
-
-		// const extAssets = [100, 100, 100, 100, 100, 100]
-		// const extLiabilities = [0, 0, 0, 0, 0, 0]
-		// const shock = [0, 0, 0, 0, 0, 100]
-		// const liabilityMatrix = [
+		// extAssets = [100, 100, 100, 100, 100, 100]
+		// extLiabilities = [0, 0, 0, 0, 0, 0]
+		// shock = [0, 0, 0, 0, 0, 100]
+		// liabilityMatrix = [
 		// 	[0, 50, 70, 0, 0, 0],
 		// 	[0, 0, 50, 70, 0, 0],
 		// 	[0, 0, 0, 50, 70, 0],
@@ -69,23 +90,6 @@ export const useStore = defineStore('main', {
 		// 	[70, 0, 0, 0, 0, 50],
 		// 	[50, 70, 0, 0, 0, 0],
 		// ]
-
-		// Contrived example of emergent disaster
-		const extAssets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
-		const extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-		const shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
-		const liabilityMatrix = [
-			[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
-			[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
-			[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
-			[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
-			[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
-			[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
-			[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
-			[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
-			[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
-			[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		]
 
 		const s: State = {
 			extAssets,
@@ -130,15 +134,15 @@ export const useStore = defineStore('main', {
 		nextModelI() {
 			this.modelI = Math.min(this.equityOuts.length - 1, this.modelI + 1)
 		},
-		rerunModel() {
+		async rerunModel() {
 			this.setLoading()
-			const results = runModel(
-				this.extAssets,
-				this.extLiabilities,
-				this.liabilityMatrix,
-				this.shock,
-				this.valueFunc,
-			)
+			const results = await worker.send({
+				extAssets: [...this.extAssets],
+				extLiabilities: [...this.extLiabilities],
+				liabilityMatrix: [...this.liabilityMatrix.map((r) => [...r])],
+				shock: [...this.shock],
+				valueFunc: this.valueFunc,
+			})
 			this.equityOuts = results.eqVals
 			this.effectiveValues = results.effectiveAssetVals
 			if (this.modelI >= this.equityOuts.length)
@@ -165,6 +169,27 @@ export const useStore = defineStore('main', {
 			this.liabilityMatrix.forEach((row) => row.pop())
 			this.updating = false
 			this.extAssets.pop()
+		},
+		async timeModel() {
+			const results = {} as Record<number, number>
+			for (let nodes = 10; nodes < 50; nodes++) {
+				const randInputs = randomiseInputs(nodes)
+
+				const t1 = performance.now()
+				for (let i = 0; i < 100; i++) {
+					await worker.send({
+						extAssets: [...randInputs.extAssets],
+						extLiabilities: [...randInputs.extLiabilities],
+						liabilityMatrix: [...randInputs.liabilityMatrix.map((r) => [...r])],
+						shock: [...randInputs.shock],
+						valueFunc: 'Distress',
+					})
+				}
+				const t2 = performance.now()
+				results[nodes] = t2 - t1
+				console.log(nodes, t2 - t1)
+			}
+			console.log(results)
 		},
 	},
 })

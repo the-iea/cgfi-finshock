@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref, Ref, computed, watch } from 'vue'
+import { onMounted, ref, Ref, computed, watch, nextTick } from 'vue'
 import { useStore } from '@/store/store'
 import * as d3 from 'd3'
 
 const store = useStore()
-store.rerunModel()
+store.rerunModel().then(draw)
 
 const chartRef = ref(null) as unknown as Ref<HTMLElement>
 
@@ -17,7 +17,6 @@ const margin = ref({
 	left: 20,
 })
 
-const totalSteps = store.equityOuts.length
 const stepLength = computed(() => {
 	// return 10000 // store.equityOuts.length
 	const maxStepLength = 500 // maximum step length for the first iteration
@@ -25,7 +24,8 @@ const stepLength = computed(() => {
 
 	// Exponential decay formula
 	const stepLength =
-		maxStepLength * Math.exp(-2.5 * ((store.modelI - 1) / totalSteps))
+		maxStepLength *
+		Math.exp(-2.5 * ((store.modelI - 1) / store.equityOuts.length))
 
 	// Ensure step length is not below the minimum step length
 	return Math.max(stepLength, minStepLength)
@@ -139,14 +139,14 @@ const fillFunc = (d: any) => {
 }
 const shockFillFunc = (_: any, i: number) => {
 	if (store.modelI <= 0) {
-		if (store.shock[i] > 0) return '#df2828'
-		if (store.shock[i] < 0) return '#28df28'
+		return 'url(#diagonalHatch)'
 	}
 	return 'none'
 }
 
 let chords: d3.Chords
 function draw() {
+	if (store.equityOuts.length === 0) return
 	const graphContainer = d3.select(chartRef.value).select('#graph')
 	graphContainer.attr(
 		'transform',
@@ -318,10 +318,15 @@ function drawHighlight() {
 
 watch(
 	() => [store.equities, ...store.shock, store.valueFunc],
-	() => {
+	async () => {
 		if (!store.updating) {
-			console.log('Rerunning model')
-			store.rerunModel()
+			console.log('something changed, rerunning model')
+			await nextTick()
+			store.setLoading()
+			await store.rerunModel()
+			// await new Promise((resolve) => setTimeout(resolve, 3000))
+			store.setLoadingDone()
+			console.log('would redraw')
 			draw()
 		}
 	},
@@ -353,6 +358,17 @@ onMounted(() => {
 <template>
 	<div class="chart">
 		<svg class="chart-svg" ref="chartRef">
+			<defs>
+				<pattern
+					id="diagonalHatch"
+					width="10"
+					height="10"
+					patternUnits="userSpaceOnUse"
+				>
+					<path d="M 0 0 L 10 10" stroke="#600000" stroke-width="1" />
+					<path d="M 10 0 L 0 10" stroke="#600000" stroke-width="1" />
+				</pattern>
+			</defs>
 			<g id="graph">
 				<g id="bars"></g>
 			</g>

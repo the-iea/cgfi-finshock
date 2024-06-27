@@ -33,6 +33,7 @@ app.use(router)
 app.component('fa-icon', FontAwesomeIcon)
 
 const store = useStore()
+// store.timeModel()
 // TODO use language store here (if required)
 const i18n = createI18n(() => store.lang as Language)
 app.use(i18n)
