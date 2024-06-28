@@ -30,12 +30,6 @@ watch(
 		}
 	},
 )
-
-// import { runModel } from '../../wasmbuild/debug.js'
-
-// const test = () => {
-// 	console.log(runModel)
-// }
 </script>
 
 <template>
@@ -44,8 +38,6 @@ watch(
 		class="controls"
 		:class="{ disabled: store.animating }"
 	>
-		<button @click="store.timeModel">Click</button>
-		<button @click="test">Test WASM</button>
 		<div class="control">
 			<label for="node">{{ $l.selNode }}</label>
 			<select class="ui" id="node" v-model="store.selectedNode">

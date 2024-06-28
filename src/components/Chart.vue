@@ -320,13 +320,9 @@ watch(
 	() => [store.equities, ...store.shock, store.valueFunc],
 	async () => {
 		if (!store.updating) {
-			console.log('something changed, rerunning model')
-			await nextTick()
 			store.setLoading()
 			await store.rerunModel()
-			// await new Promise((resolve) => setTimeout(resolve, 3000))
 			store.setLoadingDone()
-			console.log('would redraw')
 			draw()
 		}
 	},
