@@ -1,11 +1,23 @@
 // Required packages (need to be installed separately in Node.js environment)
-import * as math from 'mathjs'
 // import jStat from 'jstat'
 import { beta, normal } from 'jstat'
 
 // Helper function for matrix sum along rows
-function rowSums(matrix: number[][]) {
-	return matrix.map((row) => row.reduce((sum, val) => sum + val, 0))
+function rowSum(matrix: number[][], i: number): number {
+	let sum: number = 0
+	for (let j = 0; j < matrix[i].length; j++) {
+		sum += matrix[i][j]
+	}
+	return sum
+}
+
+// Helper function for matrix sum along rows
+function colSum(matrix: number[][], j: number): number {
+	let sum: number = 0
+	for (let i = 0; i < matrix.length; i++) {
+		sum += matrix[i][j]
+	}
+	return sum
 }
 
 // Helper function for element-wise operations
@@ -27,7 +39,7 @@ function IntVal(
 ) {
 	let Frac = elementWiseOperation(
 		OE,
-		(val, i) => 1 + val / (rowSums(L)[i] + EL[i]),
+		(val, i) => 1 + val / (rowSum(L, i) + EL[i]),
 	)
 	Frac = Frac.map((val) => (isFinite(val) ? val : 0))
 	Frac = Frac.map((val) => (isNaN(val) ? 0 : val))
@@ -125,19 +137,15 @@ function iterateModel(
 	 */
 	const eqVals = []
 	const effectiveAssetVals = []
-	let E = Ae.map(
-		(val, i) => val + rowSums(math.transpose(L))[i] - rowSums(L)[i] - Le[i],
-	)
+	let E = Ae.map((val, i) => val + colSum(L, i) - rowSum(L, i) - Le[i])
 
 	// eqVals stores the successive steps in the model run.
 	// So we push E(0) to eqVals
 	eqVals.push([...E])
 	effectiveAssetVals.push(new Array(L.length).fill(1))
 
-	const LT = math.transpose(L)
-
 	// Now calculate E(1) and push it to eqVals
-	E = Ae.map((val, i) => val - X[i] + rowSums(LT)[i] - rowSums(L)[i] - Le[i])
+	E = Ae.map((val, i) => val - X[i] + colSum(L, i) - rowSum(L, i) - Le[i])
 
 	eqVals.push([...E])
 
@@ -180,8 +188,8 @@ function iterateModel(
 		for (let i = 0; i < E.length; i++) {
 			let effLSum = 0
 			let intASum = 0
-			for (let j = 0; j < LT[i].length; j++) {
-				effLSum += LT[i][j] * OIntVal[j]
+			for (let j = 0; j < L.length; j++) {
+				effLSum += L[j][i] * OIntVal[j]
 				intASum += L[i][j]
 			}
 			E[i] = Ae[i] - X[i] + effLSum - intASum - Le[i]
@@ -191,7 +199,7 @@ function iterateModel(
 		// 		val -
 		// 		X[i] +
 		// 		LT[i].reduce((sum, val, j) => sum + val * OIntVal[j], 0) -
-		// 		rowSums(L)[i] -
+		// 		rowSum(L,i) -
 		// 		Le[i],
 		// )
 		// console.log(E, E1)
@@ -226,8 +234,8 @@ export function getEquities(
 	return extAssets.map(
 		(val, i) =>
 			val +
-			rowSums(math.transpose(liabilityMatrix))[i] -
-			rowSums(liabilityMatrix)[i] -
+			colSum(liabilityMatrix, i) -
+			rowSum(liabilityMatrix, i) -
 			extLiabilities[i],
 	)
 }
@@ -247,7 +255,7 @@ export function runModel(
 	// Initial equity
 	const E0 = getEquities(extAssets, extLiabilities, liabilityMatrix)
 	const k0 = E0.map(
-		(val, i) => val / (rowSums(liabilityMatrix)[i] + extLiabilities[i]),
+		(val, i) => val / (rowSum(liabilityMatrix, i) + extLiabilities[i]),
 	) // capital cushion (distress function)
 
 	return iterateModel(
