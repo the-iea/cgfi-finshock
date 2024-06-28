@@ -128,25 +128,23 @@ function iterateModel(
 	let E = Ae.map(
 		(val, i) => val + rowSums(math.transpose(L))[i] - rowSums(L)[i] - Le[i],
 	)
-	// console.log('E', E)
-	let OIntVal = new Array(L.length).fill(1)
 
 	// eqVals stores the successive steps in the model run.
 	// So we push E(0) to eqVals
 	eqVals.push([...E])
-	effectiveAssetVals.push([...OIntVal])
+	effectiveAssetVals.push(new Array(L.length).fill(1))
+
+	const LT = math.transpose(L)
 
 	// Now calculate E(1) and push it to eqVals
-	E = Ae.map(
-		(val, i) =>
-			val - X[i] + rowSums(math.transpose(L))[i] - rowSums(L)[i] - Le[i],
-	)
+	E = Ae.map((val, i) => val - X[i] + rowSums(LT)[i] - rowSums(L)[i] - Le[i])
 
 	eqVals.push([...E])
 
 	let iteration = 0
 	const max_iterations = 5000
 	let OE = new Array(E.length).fill(1e9)
+	let OIntVal: number[]
 
 	// Now we iterate until convergence or max_iterations
 	// Each time step we re-assess the relative values of the nodes
@@ -172,18 +170,32 @@ function iterateModel(
 		// External assets - external liabilities
 		// Plus assets from other nodes (liabilities in the L-matrix), multiplied by the effective value of that node
 		// Minus the liabilities to other nodes.
-		E = Ae.map(
-			(val, i) =>
-				val -
-				X[i] +
-				math
-					.transpose(L)
-					[i].reduce((sum, val, j) => sum + val * OIntVal[j], 0) -
-				rowSums(L)[i] -
-				Le[i],
-		)
+
+		// 		let result = 0;
+		// for (const { a, b } of array) {
+		//    result += a + b;
+		// }
+		// return result;
+		E = new Array(E.length)
+		for (let i = 0; i < E.length; i++) {
+			let effLSum = 0
+			let intASum = 0
+			for (let j = 0; j < LT[i].length; j++) {
+				effLSum += LT[i][j] * OIntVal[j]
+				intASum += L[i][j]
+			}
+			E[i] = Ae[i] - X[i] + effLSum - intASum - Le[i]
+		}
+		// E = Ae.map(
+		// 	(val, i) =>
+		// 		val -
+		// 		X[i] +
+		// 		LT[i].reduce((sum, val, j) => sum + val * OIntVal[j], 0) -
+		// 		rowSums(L)[i] -
+		// 		Le[i],
+		// )
+		// console.log(E, E1)
 		eqVals.push([...E])
-		// console.log(Le)
 		iteration++
 	}
 	// Once more, so we can save the final effective asset values

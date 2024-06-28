@@ -38,6 +38,7 @@ watch(
 		class="controls"
 		:class="{ disabled: store.animating }"
 	>
+		<button @click="store.timeModel">Click</button>
 		<div class="control">
 			<label for="node">{{ $l.selNode }}</label>
 			<select class="ui" id="node" v-model="store.selectedNode">
@@ -49,12 +50,48 @@ watch(
 			<button class="addremove" @click="store.removeNode">-</button>
 		</div>
 		<div class="control">
-			<!-- <p>
+			<p>
 				{{ $l.equityIs }}:
-				{{ store.equityOuts[store.modelI][store.selectedNode].toFixed(3) }}
-			</p> -->
+				{{
+					store.equityOuts.length > store.modelI
+						? store.equityOuts[store.modelI][store.selectedNode].toFixed(3)
+						: 'N/A'
+				}}
+			</p>
 		</div>
-		<!-- <div class="spacer"></div> -->
+		<div class="control">
+			<label for="shock">{{ $l.shock }}</label>
+			<input
+				class="ui"
+				id="shock"
+				type="number"
+				step="10"
+				v-model="store.shock[store.selectedNode]"
+			/>
+		</div>
+		<div class="control">
+			<label for="extAsset">{{ $l.extAsset }}</label>
+			<input
+				class="ui"
+				id="extAsset"
+				type="number"
+				min="0"
+				step="10"
+				v-model="store.extAssets[store.selectedNode]"
+			/>
+		</div>
+		<div class="control">
+			<label for="extLiability">{{ $l.extLiability }}</label>
+			<input
+				class="ui"
+				id="extLiability"
+				type="number"
+				min="0"
+				step="10"
+				v-model="store.extLiabilities[store.selectedNode]"
+			/>
+		</div>
+		<div class="spacer"></div>
 		<div class="control">
 			<label> </label>
 			<label> Owes</label>
@@ -92,39 +129,7 @@ watch(
 				@blur="store.selectedLiability = null"
 			/>
 		</div>
-		<div class="spacer"></div>
-		<div class="control">
-			<label for="shock">{{ $l.shock }}</label>
-			<input
-				class="ui"
-				id="shock"
-				type="number"
-				step="10"
-				v-model="store.shock[store.selectedNode]"
-			/>
-		</div>
-		<div class="control">
-			<label for="extAsset">{{ $l.extAsset }}</label>
-			<input
-				class="ui"
-				id="extAsset"
-				type="number"
-				min="0"
-				step="10"
-				v-model="store.extAssets[store.selectedNode]"
-			/>
-		</div>
-		<div class="control">
-			<label for="extLiability">{{ $l.extLiability }}</label>
-			<input
-				class="ui"
-				id="extLiability"
-				type="number"
-				min="0"
-				step="10"
-				v-model="store.extLiabilities[store.selectedNode]"
-			/>
-		</div>
+
 		<div class="spacer" />
 		<div class="control">
 			<label for="valueFunc">{{ $l.valueFunc }}</label>

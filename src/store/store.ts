@@ -56,28 +56,28 @@ export const useStore = defineStore('main', {
 		let shock: number[]
 		let liabilityMatrix: number[][]
 
-		const randInputs = randomiseInputs(100)
+		const randInputs = randomiseInputs(10)
 		extAssets = randInputs.extAssets
 		extLiabilities = randInputs.extLiabilities
 		shock = randInputs.shock
 		liabilityMatrix = randInputs.liabilityMatrix
 
 		// Contrived example of emergent disaster
-		// extAssets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
-		// extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-		// shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
-		// liabilityMatrix = [
-		// 	[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
-		// 	[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
-		// 	[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
-		// 	[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
-		// 	[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
-		// 	[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
-		// 	[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
-		// 	[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
-		// 	[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
-		// 	[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		// ]
+		extAssets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+		extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+		shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
+		liabilityMatrix = [
+			[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
+			[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
+			[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
+			[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
+			[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
+			[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
+			[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		]
 
 		// extAssets = [100, 100, 100, 100, 100, 100]
 		// extLiabilities = [0, 0, 0, 0, 0, 0]
