@@ -143,8 +143,8 @@ export const useStore = defineStore('main', {
 				shock: [...this.shock],
 				valueFunc: this.valueFunc,
 			})
-			this.equityOuts = results.eqVals
-			this.effectiveValues = results.effectiveAssetVals
+			this.equityOuts = results[0]
+			this.effectiveValues = results[1]
 			if (this.modelI >= this.equityOuts.length)
 				this.modelI = this.equityOuts.length - 1
 			this.setLoadingDone()
