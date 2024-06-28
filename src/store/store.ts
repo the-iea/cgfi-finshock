@@ -56,7 +56,7 @@ export const useStore = defineStore('main', {
 		let shock: number[]
 		let liabilityMatrix: number[][]
 
-		const randInputs = randomiseInputs(10)
+		const randInputs = randomiseInputs(200)
 		extAssets = randInputs.extAssets
 		extLiabilities = randInputs.extLiabilities
 		shock = randInputs.shock
@@ -172,7 +172,7 @@ export const useStore = defineStore('main', {
 		},
 		async timeModel() {
 			const results = {} as Record<number, number>
-			for (let nodes = 10; nodes < 50; nodes++) {
+			for (let nodes = 50; nodes < 1000; nodes += 50) {
 				const randInputs = randomiseInputs(nodes)
 
 				const t1 = performance.now()

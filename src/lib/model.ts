@@ -1,6 +1,6 @@
 // Required packages (need to be installed separately in Node.js environment)
 // import jStat from 'jstat'
-import { beta, normal } from 'jstat'
+// import { normal } from 'jstat'
 
 // Helper function for matrix sum along rows
 function rowSum(matrix: number[][], i: number): number {
@@ -20,12 +20,122 @@ function colSum(matrix: number[][], j: number): number {
 	return sum
 }
 
-// Helper function for element-wise operations
-function elementWiseOperation(
-	array: number[],
-	callback: (val: number, i: number) => number,
-) {
-	return array.map(callback)
+const erfCof = [
+	-1.3026537197817094, 6.4196979235649026e-1, 1.9476473204185836e-2,
+	-9.561514786808631e-3, -9.46595344482036e-4, 3.66839497852761e-4,
+	4.2523324806907e-5, -2.0278578112534e-5, -1.624290004647e-6, 1.30365583558e-6,
+	1.5626441722e-8, -8.5238095915e-8, 6.529054439e-9, 5.059343495e-9,
+	-9.91364156e-10, -2.27365122e-10, 9.6467911e-11, 2.394038e-12, -6.886027e-12,
+	8.94487e-13, 3.13092e-13, -1.12708e-13, 3.81e-16, 7.106e-15, -1.523e-15,
+	-9.4e-17, 1.21e-16, -2.8e-17,
+]
+function erf(x: number) {
+	let j = erfCof.length - 1
+	let isneg = false
+	let d = 0
+	let dd = 0
+	let t, ty, tmp, res
+
+	if (x < 0) {
+		x = -x
+		isneg = true
+	}
+
+	t = 2 / (2 + x)
+	ty = 4 * t - 2
+
+	for (; j > 0; j--) {
+		tmp = d
+		d = ty * d - dd + cof[j]
+		dd = tmp
+	}
+
+	res = t * Math.exp(-x * x + 0.5 * (cof[0] + ty * d) - dd)
+	return isneg ? res - 1 : 1 - res
+}
+
+function normalCDF(x: number): number {
+	// Standard normal CDF with mean 0 and standard deviation 1
+	return 0.5 * (1.0 + erf(x / Math.sqrt(2.0)))
+}
+
+const gammaCof = [
+	76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155,
+	0.1208650973866179e-2, -0.5395239384953e-5,
+]
+function gammaln(x: number) {
+	let j = 0
+	let ser = 1.000000000190015
+	let xx, y, tmp
+	tmp = (y = xx = x) + 5.5
+	tmp -= (xx + 0.5) * Math.log(tmp)
+	for (; j < 6; j++) ser += gammaCof[j] / ++y
+	return Math.log((2.5066282746310005 * ser) / xx) - tmp
+}
+
+function betacf(x: number, a: number, b: number) {
+	let fpmin = 1e-30
+	let m = 1
+	let qab = a + b
+	let qap = a + 1
+	let qam = a - 1
+	let c = 1
+	let d = 1 - (qab * x) / qap
+	let m2, aa, del, h
+
+	// These q's will be used in factors that occur in the coefficients
+	if (Math.abs(d) < fpmin) d = fpmin
+	d = 1 / d
+	h = d
+
+	for (; m <= 100; m++) {
+		m2 = 2 * m
+		aa = (m * (b - m) * x) / ((qam + m2) * (a + m2))
+		// One step (the even one) of the recurrence
+		d = 1 + aa * d
+		if (Math.abs(d) < fpmin) d = fpmin
+		c = 1 + aa / c
+		if (Math.abs(c) < fpmin) c = fpmin
+		d = 1 / d
+		h *= d * c
+		aa = (-(a + m) * (qab + m) * x) / ((a + m2) * (qap + m2))
+		// Next step of the recurrence (the odd one)
+		d = 1 + aa * d
+		if (Math.abs(d) < fpmin) d = fpmin
+		c = 1 + aa / c
+		if (Math.abs(c) < fpmin) c = fpmin
+		d = 1 / d
+		del = d * c
+		h *= del
+		if (Math.abs(del - 1.0) < 3e-7) break
+	}
+
+	return h
+}
+function iBeta(x: number, a: number, b: number): number {
+	// Factors in front of the continued fraction.
+	let bt =
+		x === 0 || x === 1
+			? 0
+			: Math.exp(
+					gammaln(a + b) -
+						gammaln(a) -
+						gammaln(b) +
+						a * Math.log(x) +
+						b * Math.log(1 - x),
+				)
+	if (x < 0 || x > 1) throw new Error('Argument x must be between 0 and 1.')
+	if (x < (a + 1) / (a + b + 2))
+		// Use continued fraction directly.
+		return (bt * betacf(x, a, b)) / a
+	// else use continued fraction after making the symmetry transformation.
+	return 1 - (bt * betacf(1 - x, b, a)) / b
+}
+
+function betaCDF(x: number, a: number, b: number): number {
+	if (x > 1) return 1
+	if (x < 0) return 0
+	return iBeta(x, a, b)
 }
 
 function IntVal(
@@ -37,25 +147,23 @@ function IntVal(
 	a: number,
 	b: number,
 ) {
-	let Frac = elementWiseOperation(
-		OE,
-		(val, i) => 1 + val / (rowSum(L, i) + EL[i]),
-	)
-	Frac = Frac.map((val) => (isFinite(val) ? val : 0))
-	Frac = Frac.map((val) => (isNaN(val) ? 0 : val))
-
-	return Frac.map((frac, i) => {
-		if (k[i] === 0) {
-			return frac >= 1 ? 1 : 0
-		} else {
-			return (
-				(frac >= 1 + k[i] ? 1 : 0) +
-				(frac >= 1 && frac < 1 + k[i]
-					? 1 - R * beta.cdf((1 + k[i] - frac) / k[i], a, b)
-					: 0)
-			)
+	let frac = new Array(OE.length)
+	for (let i = 0; i < OE.length; i++) {
+		frac[i] = 1 + OE[i] / (rowSum(L, i) + EL[i])
+		if (!isFinite(frac[i]) || isNaN(frac[i])) {
+			frac[i] = 0
 		}
-	})
+		if (k[i] === 0) {
+			frac[i] = frac[i] >= 1 ? 1 : 0
+		} else {
+			frac[i] =
+				(frac[i] >= 1 + k[i] ? 1 : 0) +
+				(frac[i] >= 1 && frac[i] < 1 + k[i]
+					? 1 - R * betaCDF((1 + k[i] - frac[i]) / k[i], a, b)
+					: 0)
+		}
+	}
+	return frac
 }
 
 function Merton(
@@ -65,20 +173,23 @@ function Merton(
 	vol: number,
 	maturity: number,
 ) {
-	let lev = OE2.map((val, i) => val / Ae[i])
+	const ret = new Array(OE2.length)
+	for (let i = 0; i < OE2.length; i++) {
+		ret[i] = OE2[i] / Ae[i]
+		if (ret[i] >= 1) {
+			ret[i] = 1
+		} else {
+			ret[i] =
+				1 -
+				R *
+					(1 -
+						normalCDF(
+							(Math.log(1 / (1 - ret[i])) - (vol * vol * maturity) / 2) /
+								(vol * Math.sqrt(maturity)),
+						))
+		}
+	}
 
-	let vals = lev.map((lev) => {
-		return lev >= 1
-			? 1
-			: normal.cdf(
-					(Math.log(1 / (1 - lev)) - (Math.pow(vol, 2) * maturity) / 2) /
-						(vol * Math.sqrt(maturity)),
-					0,
-					1,
-				)
-	})
-
-	const ret = vals.map((val) => 1 - R * (1 - val))
 	return ret
 }
 
@@ -93,19 +204,15 @@ function BlackCox(
 	let Val = Lev.map((lev) => {
 		if (lev >= 1) return 1
 		if (lev >= 0 && lev < 1) {
-			let part1 = normal.cdf(
+			let part1 = normalCDF(
 				(Math.log(1 / (1 - lev)) - (Math.pow(vol, 2) * maturity) / 2) /
 					(vol * Math.sqrt(maturity)),
-				0,
-				1,
 			)
 			let part2 =
 				(1 / (1 - lev)) *
-				normal.cdf(
+				normalCDF(
 					(-Math.log(1 / (1 - lev)) - Math.pow(vol, 2) * maturity) /
 						(vol * Math.sqrt(maturity)),
-					0,
-					1,
 				)
 			return part1 - part2
 		}
