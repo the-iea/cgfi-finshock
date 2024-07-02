@@ -8,6 +8,11 @@ interface State {
 	shock: number[]
 	liabilityMatrix: number[][]
 	valueFunc: 'Distress' | 'Merton' | 'Black'
+	R: number
+	alpha: number
+	beta: number
+	volatility: number
+	maturity: number
 	selectedNode: number
 	selectedLiability: { to: number; from: number } | null
 	equityOuts: number[][]
@@ -28,7 +33,7 @@ function mulberry32(a: number) {
 	}
 }
 
-const getRand = mulberry32(12345)
+const getRand = mulberry32(123)
 
 const randomiseInputs = (nodes: number) => {
 	const extAssets = []
@@ -36,12 +41,12 @@ const randomiseInputs = (nodes: number) => {
 	const shock = []
 	const liabilityMatrix = []
 	for (let i = 0; i < nodes; i++) {
-		extAssets.push(getRand() * 100)
+		extAssets.push(30 + getRand() * 50)
 		extLiabilities.push(0)
-		shock.push(getRand() < 3 / nodes ? 200 : 2)
+		shock.push(getRand() < 3 / nodes ? getRand() * 50 : 0)
 		const lRow = []
 		for (let j = 0; j < nodes; j++) {
-			if (i != j && getRand() < 0.1) lRow.push(getRand() * 10)
+			if (i != j && getRand() < 10 / nodes) lRow.push(getRand() * 10)
 			else lRow.push(0)
 		}
 		liabilityMatrix.push(lRow)
@@ -56,28 +61,28 @@ export const useStore = defineStore('main', {
 		let shock: number[]
 		let liabilityMatrix: number[][]
 
-		const randInputs = randomiseInputs(200)
+		const randInputs = randomiseInputs(50)
 		extAssets = randInputs.extAssets
 		extLiabilities = randInputs.extLiabilities
 		shock = randInputs.shock
 		liabilityMatrix = randInputs.liabilityMatrix
 
 		// Contrived example of emergent disaster
-		extAssets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
-		extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-		shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
-		liabilityMatrix = [
-			[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
-			[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
-			[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
-			[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
-			[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
-			[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
-			[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
-			[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
-			[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
-			[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		]
+		// extAssets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+		// extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+		// shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
+		// liabilityMatrix = [
+		// 	[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
+		// 	[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
+		// 	[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
+		// 	[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
+		// 	[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
+		// 	[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
+		// 	[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
+		// 	[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
+		// 	[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
+		// 	[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		// ]
 
 		// extAssets = [100, 100, 100, 100, 100, 100]
 		// extLiabilities = [0, 0, 0, 0, 0, 0]
@@ -99,6 +104,11 @@ export const useStore = defineStore('main', {
 			equityOuts: [],
 			effectiveValues: [],
 			valueFunc: 'Distress',
+			R: 1,
+			alpha: 1,
+			beta: 1,
+			volatility: 0.5,
+			maturity: 5,
 			selectedNode: 0,
 			selectedLiability: { to: 1, from: 0 },
 			modelI: 0,
@@ -142,6 +152,11 @@ export const useStore = defineStore('main', {
 				liabilityMatrix: [...this.liabilityMatrix.map((r) => [...r])],
 				shock: [...this.shock],
 				valueFunc: this.valueFunc,
+				R: this.R,
+				alpha: this.alpha,
+				beta: this.beta,
+				volatility: this.volatility,
+				maturity: this.maturity,
 			})
 			this.equityOuts = results[0]
 			this.effectiveValues = results[1]

@@ -134,7 +134,7 @@ function betaCDF(x: number, a: number, b: number): number {
 	return iBeta(x, a, b)
 }
 
-function IntVal(
+function distressVal(
 	L: Array<Array<number>>,
 	EL: Array<number>,
 	OE: Array<number>,
@@ -162,7 +162,7 @@ function IntVal(
 	return frac
 }
 
-function Merton(
+function mertonVal(
 	Ae: Array<number>,
 	OE2: Array<number>,
 	R: number,
@@ -189,7 +189,7 @@ function Merton(
 	return ret
 }
 
-function BlackCox(
+function blackVal(
 	ExtA: Array<number>,
 	OE2: Array<number>,
 	R: number,
@@ -234,13 +234,13 @@ function iterateModel(
 	X: Array<number>,
 	L: Array<Array<number>>,
 	Le: Array<number>,
-	R: number,
 	k: Array<number>,
+	Type: string,
+	R: number,
 	a: number,
 	b: number,
-	EVol: number,
-	Type: string,
-	Time: number,
+	volatility: number,
+	maturityT: number,
 ): Array<Array<Array<number>>> {
 	/*
 	 * Ae: External assets
@@ -275,11 +275,11 @@ function iterateModel(
 	for (let i = 0; i < E.length; i++) {
 		OE[i] = 1e9
 	}
-	let OIntVal: Array<number>
+	let valuations: Array<number>
 	let notThereYet = true
 
 	// Now we iterate until convergence or max_iterations
-	// Each time step we re-assess the relative values of the nodes
+	// Each maturityT step we re-assess the relative values of the nodes
 	// This valuation provides the basis for reassesssing the equity values of each node
 	while (notThereYet && iteration < max_iterations) {
 		notThereYet = false
@@ -292,15 +292,15 @@ function iterateModel(
 
 		OE = getCopy(E)
 		if (Type === 'Distress') {
-			OIntVal = IntVal(L, Le, OE, k, R, a, b)
+			valuations = distressVal(L, Le, OE, k, R, a, b)
 		} else if (Type === 'Merton') {
-			OIntVal = Merton(Ae, OE, R, EVol, Time)
+			valuations = mertonVal(Ae, OE, R, volatility, maturityT)
 		} else if (Type === 'Black') {
-			OIntVal = BlackCox(Ae, OE, R, EVol, Time)
+			valuations = blackVal(Ae, OE, R, volatility, maturityT)
 		} else {
 			throw new Error('Unknown Type specified.')
 		}
-		effectiveAssetVals.push(getCopy(OIntVal))
+		effectiveAssetVals.push(getCopy(valuations))
 
 		// The definition of the new value for equity is:
 		//
@@ -308,45 +308,31 @@ function iterateModel(
 		// Plus assets from other nodes (liabilities in the L-matrix), multiplied by the effective value of that node
 		// Minus the liabilities to other nodes.
 
-		// 		let result = 0;
-		// for (const { a, b } of array) {
-		//    result += a + b;
-		// }
-		// return result;
 		E = new Array(E.length)
 		for (let i = 0; i < E.length; i++) {
 			let effLSum: number = 0
 			let intASum: number = 0
 			for (let j = 0; j < L.length; j++) {
-				effLSum += L[j][i] * OIntVal[j]
+				effLSum += L[j][i] * valuations[j]
 				intASum += L[i][j]
 			}
 			E[i] = Ae[i] - X[i] + effLSum - intASum - Le[i]
 		}
-		// E = Ae.map(
-		// 	(val, i) =>
-		// 		val -
-		// 		X[i] +
-		// 		LT[i].reduce((sum, val, j) => sum + val * OIntVal[j], 0) -
-		// 		rowSum(L,i) -
-		// 		Le[i],
-		// )
-		// console.log(E, E1)
 		eqVals.push(getCopy(E))
 		iteration++
 	}
 	// Once more, so we can save the final effective asset values
 	OE = getCopy(E)
 	if (Type === 'Distress') {
-		OIntVal = IntVal(L, Le, OE, k, R, a, b)
+		valuations = distressVal(L, Le, OE, k, R, a, b)
 	} else if (Type === 'Merton') {
-		OIntVal = Merton(Ae, OE, R, EVol, Time)
+		valuations = mertonVal(Ae, OE, R, volatility, maturityT)
 	} else if (Type === 'Black') {
-		OIntVal = BlackCox(Ae, OE, R, EVol, Time)
+		valuations = blackVal(Ae, OE, R, volatility, maturityT)
 	} else {
 		throw new Error('Unknown Type specified.')
 	}
-	effectiveAssetVals.push(getCopy(OIntVal))
+	effectiveAssetVals.push(getCopy(valuations))
 
 	if (iteration >= max_iterations) {
 		console.warn('Maximum iterations reached without convergence.')
@@ -380,8 +366,8 @@ export function runModel(
 	R: number = 1,
 	a: number = 1,
 	b: number = 1,
-	eVol: number = 0.5,
-	time: number = 5,
+	volatility: number = 0.5,
+	maturityT: number = 5,
 ): Array<Array<Array<number>>> {
 	// Initial equity
 	const E0: Array<number> = getEquities(
@@ -399,12 +385,12 @@ export function runModel(
 		shock,
 		liabilityMatrix,
 		extLiabilities,
-		R,
 		k0,
+		type,
+		R,
 		a,
 		b,
-		eVol,
-		type,
-		time,
+		volatility,
+		maturityT,
 	)
 }

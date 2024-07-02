@@ -317,7 +317,16 @@ function drawHighlight() {
 }
 
 watch(
-	() => [store.equities, ...store.shock, store.valueFunc],
+	() => [
+		store.equities,
+		...store.shock,
+		store.valueFunc,
+		store.R,
+		store.alpha,
+		store.beta,
+		store.volatility,
+		store.maturity,
+	],
 	async () => {
 		if (!store.updating) {
 			store.setLoading()

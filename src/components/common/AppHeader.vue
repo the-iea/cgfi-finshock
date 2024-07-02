@@ -25,7 +25,7 @@ header {
 	padding-bottom: $gap;
 
 	#header-title {
-		font-size: 2rem;
+		font-size: 1.5rem;
 		font-weight: 900;
 		color: $primary;
 		margin-left: 1rem;

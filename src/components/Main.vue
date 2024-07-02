@@ -13,7 +13,6 @@ const route = useRoute()
 
 onMounted(async () => {
 	console.log(import.meta.env)
-	console.log(route)
 })
 </script>
 

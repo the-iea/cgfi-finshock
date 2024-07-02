@@ -9,13 +9,7 @@ const store = useStore()
 
 const route = useRoute()
 
-onMounted(async () => {
-	console.log(import.meta.env)
-	console.log(
-		store.liabilityMatrix[store.selectedNode][0],
-		store.liabilityMatrix,
-	)
-})
+onMounted(async () => {})
 
 const controlsRef = ref<HTMLElement | null>(null)
 
@@ -59,6 +53,16 @@ watch(
 			</p>
 		</div>
 		<div class="control">
+			<p>
+				{{ $l.valueIs }}:
+				{{
+					store.effectiveValues.length > store.modelI
+						? store.effectiveValues[store.modelI][store.selectedNode].toFixed(3)
+						: 'N/A'
+				}}
+			</p>
+		</div>
+		<div class="control">
 			<label for="shock">{{ $l.shock }}</label>
 			<input
 				class="ui"
@@ -90,6 +94,73 @@ watch(
 				v-model="store.extLiabilities[store.selectedNode]"
 			/>
 		</div>
+		<div class="spacer" />
+		<div class="control">
+			<label for="valueFunc">{{ $l.valueFunc }}</label>
+			<select class="ui" id="valueFunc" v-model="store.valueFunc">
+				<option value="Distress">Distress</option>
+				<option value="Merton">Merton</option>
+				<option value="Black">Black</option>
+			</select>
+		</div>
+		<div class="control">
+			<label for="recoveryRate">{{ $l.recoveryRate }}</label>
+			<input
+				class="ui"
+				id="recoveryRate"
+				type="number"
+				min="0"
+				max="1"
+				step="0.1"
+				v-model="store.R"
+			/>
+		</div>
+		<div class="control" v-show="store.valueFunc === 'Distress'">
+			<label for="alpha">{{ $l.alphabeta }}</label>
+			<input
+				class="ui lmat"
+				id="alpha"
+				type="number"
+				min="0"
+				max="1"
+				step="0.1"
+				v-model="store.alpha"
+			/>
+			<input
+				class="ui lmat"
+				id="beta"
+				type="number"
+				min="0"
+				max="1"
+				step="0.1"
+				v-model="store.beta"
+			/>
+		</div>
+		<div class="control" v-show="store.valueFunc !== 'Distress'">
+			<label for="volatility">{{ $l.volatility }}</label>
+			<input
+				class="ui"
+				id="volatility"
+				type="number"
+				min="0"
+				max="1"
+				step="0.1"
+				v-model="store.volatility"
+			/>
+		</div>
+		<div class="control" v-show="store.valueFunc !== 'Distress'">
+			<label for="maturity">{{ $l.maturity }}</label>
+			<input
+				class="ui"
+				id="maturity"
+				type="number"
+				min="0"
+				max="50"
+				step="1"
+				v-model="store.maturity"
+			/>
+		</div>
+
 		<div class="spacer"></div>
 		<div class="control">
 			<label> </label>
@@ -128,16 +199,6 @@ watch(
 				@blur="store.selectedLiability = null"
 			/>
 		</div>
-
-		<div class="spacer" />
-		<div class="control">
-			<label for="valueFunc">{{ $l.valueFunc }}</label>
-			<select class="ui" id="valueFunc" v-model="store.valueFunc">
-				<option value="Distress">Distress</option>
-				<option value="Merton">Merton</option>
-				<option value="Black">Black</option>
-			</select>
-		</div>
 	</div>
 </template>
 
@@ -151,7 +212,7 @@ watch(
 
 	&.disabled {
 		pointer-events: none;
-		opacity: 0.8;
+		opacity: 0.7;
 	}
 
 	.control {
@@ -160,7 +221,9 @@ watch(
 		flex-direction: row;
 
 		label {
-			flex: 1 0 20%;
+			flex: 1 0 10rem;
+			text-align: right;
+			padding-right: 1rem;
 		}
 
 		.ui {
