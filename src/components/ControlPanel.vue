@@ -24,6 +24,10 @@ watch(
 		}
 	},
 )
+
+const importData = () => {
+	store.importData()
+}
 </script>
 
 <template>
@@ -32,11 +36,16 @@ watch(
 		class="controls"
 		:class="{ disabled: store.animating }"
 	>
+		<button @click="importData" class="import">Import data</button>
 		<div class="control">
 			<label for="node">{{ $l.selNode }}</label>
 			<select class="ui" id="node" v-model="store.selectedNode">
 				<option v-for="i in store.nNodes" :key="i" :value="i - 1">
-					{{ i - 1 }}
+					{{
+						store.nodeIds !== null && store.nodeIds[i - 1]
+							? store.nodeIds[i - 1]
+							: i - 1
+					}}
 				</option>
 			</select>
 			<button class="addremove" @click="store.addNode">+</button>
@@ -47,7 +56,7 @@ watch(
 				{{ $l.equityIs }}:
 				{{
 					store.equityOuts.length > store.modelI
-						? store.equityOuts[store.modelI][store.selectedNode].toFixed(3)
+						? store.equityOuts[store.modelI][store.selectedNode].toFixed(2)
 						: 'N/A'
 				}}
 			</p>
@@ -162,7 +171,7 @@ watch(
 		</div>
 
 		<div class="spacer"></div>
-		<div class="control">
+		<div class="control Ltitle">
 			<label> </label>
 			<label> Owes</label>
 			<label> Owed by</label>
@@ -173,7 +182,11 @@ watch(
 			:key="i"
 			v-show="i - 1 != store.selectedNode"
 		>
-			<label :for="'owes' + i"> {{ i - 1 }}</label>
+			<label :for="'owes' + i">{{
+				store.nodeIds !== null && store.nodeIds[i - 1]
+					? store.nodeIds[i - 1]
+					: i - 1
+			}}</label>
 			<input
 				class="ui lmat"
 				:id="'owes' + i"
@@ -224,6 +237,11 @@ watch(
 			flex: 1 0 10rem;
 			text-align: right;
 			padding-right: 1rem;
+		}
+
+		&.Ltitle label {
+			flex: 1 0 30%;
+			text-align: center;
 		}
 
 		.ui {

@@ -21,11 +21,11 @@ const stepLength = computed(() => {
 	// return 10000 // store.equityOuts.length
 	const maxStepLength = 500 // maximum step length for the first iteration
 	const minStepLength = 50 // minimum step length for the final iteration
+	const maxStepsToFull = 50
 
 	// Exponential decay formula
 	const stepLength =
-		maxStepLength *
-		Math.exp(-2.5 * ((store.modelI - 1) / store.equityOuts.length))
+		maxStepLength * Math.exp(-2.5 * ((store.modelI - 1) / maxStepsToFull))
 
 	// Ensure step length is not below the minimum step length
 	return Math.max(stepLength, minStepLength)
@@ -40,13 +40,49 @@ const eScale = d3
 	.domain([0, maxEquity.value])
 	.range([0, maxEquityBarHeight.value])
 
+const darkenColor = (hex: string, amount: number): string => {
+	// Check if hex string is valid
+	if (!/^#[0-9A-F]{6}$/i.test(hex)) throw new Error('Invalid hex color format')
+
+	// Convert hex string to RGB values (0-255)
+	const rgb = hex
+		.slice(1)
+		.match(/.{2}/g)!
+		.map((x) => parseInt(x, 16))
+
+	// Darken each color channel by the specified amount
+	for (let i = 0; i < 3; i++) {
+		rgb[i] = Math.min(255, rgb[i] - amount)
+	}
+
+	// Convert RGB values back to hex string
+	const newHex = '#' + rgb.map((x) => x.toString(16).padStart(2, '0')).join('')
+
+	return newHex
+}
+
 const allColors = [
 	...d3.schemeSet3,
 	...d3.schemeTableau10,
 	...d3.schemeSet1,
 	...d3.schemeDark2,
 ]
-const color = (index: number) => allColors[index % allColors.length]
+const allGroups = computed(() => [...new Set(store.nodeGroups)])
+let count = 0
+let lastColor = ''
+const color = (index: number) => {
+	if (store.nodeGroups === null) return allColors[index % allColors.length]
+	const colorI = allGroups.value.indexOf(store.nodeGroups[index])
+	const color = allColors[colorI % allColors.length]
+	console.log('color', color, 'last', lastColor)
+	if (color == lastColor) {
+		count++
+		return darkenColor(color, count * 15)
+	}
+	lastColor = color
+	count = 0
+	return color
+}
 
 const startAnimation = () => {
 	if (store.animating) {
@@ -326,6 +362,7 @@ watch(
 		store.beta,
 		store.volatility,
 		store.maturity,
+		store.updating,
 	],
 	async () => {
 		if (!store.updating) {

@@ -1,8 +1,11 @@
 import { getEquities } from '@/lib/model'
 import worker from '@/lib/worker'
+import Papa from 'papaparse'
 import { defineStore } from 'pinia'
 
 interface State {
+	nodeIds: string[] | null
+	nodeGroups: string[] | null
 	extAssets: number[]
 	extLiabilities: number[]
 	shock: number[]
@@ -34,6 +37,8 @@ function mulberry32(a: number) {
 }
 
 const getRand = mulberry32(123)
+const transpose = (matrix: any[][]) =>
+	matrix[0].map((_, col) => matrix.map((row) => row[col]))
 
 const randomiseInputs = (nodes: number) => {
 	const extAssets = []
@@ -68,21 +73,21 @@ export const useStore = defineStore('main', {
 		liabilityMatrix = randInputs.liabilityMatrix
 
 		// Contrived example of emergent disaster
-		// extAssets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
-		// extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-		// shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
-		// liabilityMatrix = [
-		// 	[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
-		// 	[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
-		// 	[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
-		// 	[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
-		// 	[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
-		// 	[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
-		// 	[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
-		// 	[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
-		// 	[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
-		// 	[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		// ]
+		extAssets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+		extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+		shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
+		liabilityMatrix = [
+			[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
+			[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
+			[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
+			[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
+			[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
+			[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
+			[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		]
 
 		// extAssets = [100, 100, 100, 100, 100, 100]
 		// extLiabilities = [0, 0, 0, 0, 0, 0]
@@ -97,6 +102,8 @@ export const useStore = defineStore('main', {
 		// ]
 
 		const s: State = {
+			nodeIds: null,
+			nodeGroups: null,
 			extAssets,
 			extLiabilities,
 			shock,
@@ -166,6 +173,9 @@ export const useStore = defineStore('main', {
 		},
 		addNode() {
 			this.updating = true
+			if (this.nodeIds !== null) {
+				this.nodeIds.push('')
+			}
 			this.extLiabilities.push(0)
 			this.shock.push(0)
 			this.liabilityMatrix.push(this.extAssets.map(() => 0))
@@ -178,12 +188,67 @@ export const useStore = defineStore('main', {
 		removeNode() {
 			if (this.extAssets.length <= 1) return
 			this.updating = true
+			if (this.nodeIds !== null) {
+				this.nodeIds.pop()
+			}
 			this.extLiabilities.pop()
 			this.shock.pop()
 			this.liabilityMatrix.pop()
 			this.liabilityMatrix.forEach((row) => row.pop())
 			this.updating = false
 			this.extAssets.pop()
+		},
+		importData() {
+			const reader = new FileReader()
+			const input = document.createElement('input')
+			input.type = 'file'
+			input.onchange = (event) => {
+				// @ts-ignore
+				const file = event.target.files[0]
+				// You can now use the `file` object as needed
+				Papa.parse(file, {
+					delimiter: ',',
+					header: false,
+					skipEmptyLines: true,
+					dynamicTyping: true,
+					// transformHeader: (header, i) => {
+					// 	if (i > 3) {
+					// 		return `_${i - 4}`
+					// 	}
+					// 	return header.trim()
+					// },
+					complete: (results) => {
+						this.updating = true
+						this.nodeIds = []
+						this.nodeGroups = []
+						this.extAssets = []
+						this.extLiabilities = []
+						this.shock = []
+						this.liabilityMatrix = []
+						for (let line of results.data as any[][]) {
+							this.nodeIds.push(line[0])
+							this.nodeGroups.push(line[1])
+							this.extAssets.push(line[2])
+							this.extLiabilities.push(line[3])
+							this.shock.push(0)
+							const lRow = []
+							for (let i = 4; i < line.length; i++) {
+								lRow.push(line[i])
+							}
+							this.liabilityMatrix.push(lRow)
+						}
+						this.liabilityMatrix = transpose(this.liabilityMatrix)
+						console.log(
+							this.extAssets,
+							this.extLiabilities,
+							this.liabilityMatrix,
+							this.nodeIds,
+						)
+						this.updating = false
+					},
+				})
+			}
+			input.click()
 		},
 		async timeModel() {
 			const results = {} as Record<number, number>

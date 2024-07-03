@@ -164,6 +164,7 @@ function distressVal(
 
 function mertonVal(
 	Ae: Array<number>,
+	X: Array<number>,
 	OE2: Array<number>,
 	R: number,
 	vol: number,
@@ -171,7 +172,7 @@ function mertonVal(
 ): Array<number> {
 	const ret: Array<number> = new Array(OE2.length)
 	for (let i = 0; i < OE2.length; i++) {
-		ret[i] = OE2[i] / Ae[i]
+		ret[i] = OE2[i] / (Ae[i] - X[i])
 		if (ret[i] >= 1) {
 			ret[i] = 1
 		} else {
@@ -191,6 +192,7 @@ function mertonVal(
 
 function blackVal(
 	ExtA: Array<number>,
+	X: Array<number>,
 	OE2: Array<number>,
 	R: number,
 	vol: number,
@@ -198,7 +200,7 @@ function blackVal(
 ): Array<number> {
 	const val = new Array<number>(OE2.length)
 	for (let i = 0; i < OE2.length; i++) {
-		const levi = OE2[i] / ExtA[i]
+		const levi = OE2[i] / (ExtA[i] - X[i])
 		if (levi > 1) {
 			val[i] = 1
 		} else if (levi >= 0 && levi < 1) {
@@ -260,9 +262,33 @@ function iterateModel(
 	// So we push E(0) to eqVals
 	eqVals.push(getCopy(E))
 	const initEffectiveAssetVals: Array<number> = new Array(L.length)
+	let valuations: Array<number>
 	initEffectiveAssetVals.fill(1)
 	effectiveAssetVals.push(initEffectiveAssetVals)
 
+	if (Type === 'Distress') {
+		let shockPresent = false
+		for (let x of X) {
+			if (x !== 0) {
+				shockPresent = true
+				break
+			}
+		}
+		if (!shockPresent) {
+			return [eqVals, effectiveAssetVals]
+		}
+	}
+
+	// if (Type === 'Distress') {
+	// 	valuations = distressVal(L, Le, E, k, R, a, b)
+	// } else if (Type === 'Merton') {
+	// 	valuations = mertonVal(Ae, X, E, R, volatility, maturityT)
+	// } else if (Type === 'Black') {
+	// 	valuations = blackVal(Ae, X, E, R, volatility, maturityT)
+	// } else {
+	// 	throw new Error('Unknown Type specified.')
+	// }
+	// effectiveAssetVals.push(getCopy(valuations))
 	// Now calculate E(1) and push it to eqVals
 	for (let i = 0; i < Ae.length; i++) {
 		E[i] = Ae[i] - X[i] + colSum(L, i) - rowSum(L, i) - Le[i]
@@ -275,7 +301,6 @@ function iterateModel(
 	for (let i = 0; i < E.length; i++) {
 		OE[i] = 1e9
 	}
-	let valuations: Array<number>
 	let notThereYet = true
 
 	// Now we iterate until convergence or max_iterations
@@ -294,9 +319,9 @@ function iterateModel(
 		if (Type === 'Distress') {
 			valuations = distressVal(L, Le, OE, k, R, a, b)
 		} else if (Type === 'Merton') {
-			valuations = mertonVal(Ae, OE, R, volatility, maturityT)
+			valuations = mertonVal(Ae, X, OE, R, volatility, maturityT)
 		} else if (Type === 'Black') {
-			valuations = blackVal(Ae, OE, R, volatility, maturityT)
+			valuations = blackVal(Ae, X, OE, R, volatility, maturityT)
 		} else {
 			throw new Error('Unknown Type specified.')
 		}
@@ -326,9 +351,9 @@ function iterateModel(
 	if (Type === 'Distress') {
 		valuations = distressVal(L, Le, OE, k, R, a, b)
 	} else if (Type === 'Merton') {
-		valuations = mertonVal(Ae, OE, R, volatility, maturityT)
+		valuations = mertonVal(Ae, X, OE, R, volatility, maturityT)
 	} else if (Type === 'Black') {
-		valuations = blackVal(Ae, OE, R, volatility, maturityT)
+		valuations = blackVal(Ae, X, OE, R, volatility, maturityT)
 	} else {
 		throw new Error('Unknown Type specified.')
 	}
