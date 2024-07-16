@@ -53,8 +53,8 @@ onMounted(() => {
 		grid-area: main;
 		// Constrains certain badly-behaved elements
 		// max-height: calc(100vh - $headerHeight - $footerHeight - 2 * $gap);
-		max-height: calc(100vh - $headerHeight - $gap);
-		padding: 1rem;
+		max-height: calc(100vh - $headerHeight - 2 * $gap);
+		padding: $gap;
 	}
 
 	// #footer {

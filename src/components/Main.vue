@@ -36,6 +36,7 @@ onMounted(async () => {
 
 	#controls {
 		flex: 1 1 30%;
+		min-width: 25rem;
 	}
 }
 </style>

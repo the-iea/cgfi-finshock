@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, Ref, computed, watch, nextTick } from 'vue'
-import { useStore, transpose } from '@/store/store'
+import { onMounted, ref, Ref, computed, watch } from 'vue'
+import { useStore } from '@/store/store'
 import * as d3 from 'd3'
 
 const store = useStore()
-store.rerunModel().then(() => draw())
+store.rerunModel().then(draw)
 
 const chartRef = ref(null) as unknown as Ref<HTMLElement>
-const lineChartRef = ref(null) as unknown as Ref<HTMLElement>
 
 const width = ref(0)
 const height = ref(0)
@@ -18,51 +17,12 @@ const margin = ref({
 	left: 20,
 })
 
-const lineChartWidth = ref(0)
-const lineChartHeight = ref(0)
-const lineChartMargin = ref({
-	top: 20,
-	right: 20,
-	bottom: 40,
-	left: 60,
-})
-
-const stepLength = computed(() => {
-	const maxStepLength = 500 // maximum step length for the first iteration
-	const minStepLength = 50 // minimum step length for the final iteration
-	const maxStepsToFull = 50
-
-	// Exponential decay formula
-	const stepLength =
-		maxStepLength * Math.exp(-2.5 * ((store.modelI - 1) / maxStepsToFull))
-
-	// Ensure step length is not below the minimum step length
-	return Math.max(stepLength, minStepLength)
-})
-
 const maxEquity = computed(() => Math.max(...store.equityOuts.flat()))
-const maxEquityBarHeight = computed(
-	() => Math.min(width.value, height.value) * 0.25,
-)
-const maxEquityLineHeight = computed(() => lineChartHeight.value)
-const chartEqScale = computed(() =>
-	d3
-		.scaleLinear()
-		.domain([0, maxEquity.value])
-		.range([0, maxEquityBarHeight.value]),
-)
-const lineEqScale = computed(() =>
-	d3
-		.scaleLinear()
-		.domain([0, maxEquity.value])
-		.range([maxEquityLineHeight.value, 0]),
-)
-const lineXScale = computed(() =>
-	d3
-		.scaleLinear()
-		.domain([0, store.equityOuts.length - 1])
-		.range([0, lineChartWidth.value]),
-)
+const maxEquityBarHeight = computed(() => height.value * 1.0)
+const eScale = d3
+	.scaleLinear()
+	.domain([0, maxEquity.value])
+	.range([0, maxEquityBarHeight.value])
 
 const darkenColor = (hex: string, amount: number): string => {
 	// Check if hex string is valid
@@ -91,7 +51,6 @@ const allColors = [
 	...d3.schemeSet1,
 	...d3.schemeDark2,
 ]
-
 const allGroups = computed(() => [...new Set(store.nodeGroups)])
 let count = 0
 let lastColor = ''
@@ -99,6 +58,7 @@ const color = (index: number) => {
 	if (store.nodeGroups === null) return allColors[index % allColors.length]
 	const colorI = allGroups.value.indexOf(store.nodeGroups[index])
 	const color = allColors[colorI % allColors.length]
+	console.log('color', color, 'last', lastColor)
 	if (color == lastColor) {
 		count++
 		return darkenColor(color, count * 15)
@@ -118,13 +78,13 @@ const startAnimation = () => {
 	const runFunc = () => {
 		if (!store.animating) return
 
+		store.modelI++
+		draw()
 		if (store.modelI >= store.equityOuts.length - 1) {
 			store.animating = false
 		} else {
-			store.modelI++
 			setTimeout(runFunc, stepLength.value)
 		}
-		draw()
 	}
 	if (store.modelI >= store.equityOuts.length - 1) {
 		store.modelI = 0
@@ -143,13 +103,6 @@ function setSizes(resizing: boolean) {
 		width.value = rect.width - margin.value.left - margin.value.right
 		height.value = rect.height - margin.value.top - margin.value.bottom
 	}
-	if (lineChartRef) {
-		let rect = lineChartRef.value.getBoundingClientRect()
-		lineChartWidth.value =
-			rect.width - lineChartMargin.value.left - lineChartMargin.value.right
-		lineChartHeight.value =
-			rect.height - lineChartMargin.value.top - lineChartMargin.value.bottom
-	}
 }
 
 const innerRadius = computed(
@@ -165,7 +118,7 @@ const arc = d3
 	.innerRadius(() => innerRadius.value)
 	.outerRadius(
 		(_, i) =>
-			Math.max(0, chartEqScale.value(store.equityOuts[store.modelI][i])) +
+			Math.max(0, eScale(store.equityOuts[store.modelI][i])) +
 			innerRadius.value +
 			gap,
 	)
@@ -178,25 +131,19 @@ const shockArc = d3
 	.arc()
 	.innerRadius((_, i) =>
 		store.shock[i] >= 0
-			? Math.max(
-					0,
-					chartEqScale.value(0.1 + store.equityOuts[0][i] - store.shock[i]),
-				) +
+			? Math.max(0, eScale(0.1 + store.equityOuts[0][i] - store.shock[i])) +
 				innerRadius.value +
 				gap
-			: Math.max(0, chartEqScale.value(store.equityOuts[store.modelI][i])) +
+			: Math.max(0, eScale(store.equityOuts[store.modelI][i])) +
 				innerRadius.value +
 				gap,
 	)
 	.outerRadius((_, i) =>
 		store.shock[i] >= 0
-			? Math.max(0, chartEqScale.value(store.equityOuts[store.modelI][i])) +
+			? Math.max(0, eScale(store.equityOuts[store.modelI][i])) +
 				innerRadius.value +
 				gap
-			: Math.max(
-					0,
-					chartEqScale.value(0.1 + store.equityOuts[0][i] - store.shock[i]),
-				) +
+			: Math.max(0, eScale(0.1 + store.equityOuts[0][i] - store.shock[i])) +
 				innerRadius.value +
 				gap,
 	)
@@ -217,49 +164,8 @@ const shockFillFunc = (_: any, i: number) => {
 	return 'none'
 }
 
-const line = d3
-	.line()
-	.x((d, i) => lineXScale.value(i))
-	// Bottom out at zero
-	// @ts-ignore - this is because I'm abusing line and not sending it an array of 2d arrays.
-	.y((d, i) => lineEqScale.value(d < 0 ? 0 : d))
-const fractionalModelI = ref(store.modelI)
-const dragging = ref(false)
-const drag = d3
-	.drag()
-	.on('start', (e) => {
-		dragging.value = true
-	})
-	.on('drag', (e) => {
-		fractionalModelI.value = lineXScale.value.invert(e.x)
-		const newModelI = Math.round(fractionalModelI.value)
-		if (newModelI < 0 || newModelI >= store.equityOuts.length) return
-		if (newModelI !== store.modelI) {
-			store.modelI = newModelI
-			drawGraph()
-		}
-		const chartContainer = d3.select(lineChartRef.value).select('#chart')
-		chartContainer
-			.select('g#decor')
-			.selectAll('line.time')
-			.data([fractionalModelI.value])
-			.attr('x1', (d, i) => lineXScale.value(d))
-			.attr('x2', (d, i) => lineXScale.value(d))
-	})
-	.on('end', (e) => {
-		fractionalModelI.value = store.modelI
-		draw()
-		dragging.value = false
-	})
 let chords: d3.Chords
-
-function draw(resizing = false) {
-	drawGraph(resizing)
-	drawLineChart(resizing)
-	drawLCAxes(resizing)
-}
-
-function drawGraph(resizing = false) {
+function draw() {
 	if (store.equityOuts.length === 0) return
 	const graphContainer = d3.select(chartRef.value).select('#graph')
 	graphContainer.attr(
@@ -267,6 +173,8 @@ function drawGraph(resizing = false) {
 		`translate(${width.value / 2}, ${height.value / 2})`,
 	)
 
+	eScale.domain([0, maxEquity.value])
+	eScale.range([0, maxEquityBarHeight.value])
 	chord.padAngle(12 / (innerRadius.value * store.nNodes))
 
 	chords = chord(store.liabilityMatrix)
@@ -333,9 +241,7 @@ function drawGraph(resizing = false) {
 					.call((update) =>
 						update
 							.transition()
-							.duration(
-								resizing ? 0 : dragging.value ? 50 : stepLength.value / 3,
-							)
+							.duration(stepLength.value / 3)
 							// @ts-ignore
 							.attr('d', ribbon),
 					),
@@ -364,7 +270,7 @@ function drawGraph(resizing = false) {
 			(update) =>
 				update
 					.transition()
-					.duration(resizing ? 0 : dragging.value ? 50 : stepLength.value / 3)
+					.duration(stepLength.value / 3)
 					.attr('fill', fillFunc)
 					// @ts-ignore
 					.attr('d', arc)
@@ -394,97 +300,13 @@ function drawGraph(resizing = false) {
 			(update) =>
 				update
 					.transition()
-					.duration(resizing ? 0 : dragging.value ? 50 : stepLength.value / 3)
+					.duration(stepLength.value / 3)
 					// @ts-ignore
 					.attr('d', shockArc)
 					.transition()
-					.delay(resizing ? 0 : dragging.value ? 50 : stepLength.value / 3)
+					.delay(stepLength.value / 3)
 					.attr('fill', shockFillFunc),
 		)
-}
-
-function drawLineChart(resizing = false) {
-	const chartContainer = d3.select(lineChartRef.value).select('#chart')
-
-	chartContainer.attr(
-		'transform',
-		`translate(${lineChartMargin.value.left}, ${lineChartMargin.value.top})`,
-	)
-	chartContainer
-		.select('g#lines')
-		.selectAll('path.line')
-		.data(transpose(store.equityOuts))
-		.join(
-			// @ts-ignore
-			(enter) => {
-				enter
-					.append('path')
-					.attr(
-						'd',
-						line as unknown as d3.ValueFn<SVGPathElement, number[], string>,
-					)
-					.attr('fill', 'none')
-					.attr('stroke', (d, i) => color(i))
-					.attr('stroke-width', 2)
-					.classed('line', true)
-			},
-			(update) => {
-				update.attr(
-					'd',
-					// @ts-ignore
-					line as unknown as d3.ValueFn<SVGPathElement, number[], string>,
-				)
-			},
-		)
-
-	chartContainer
-		.select('g#decor')
-		.selectAll('line.time')
-		.data([store.modelI])
-		.join(
-			// @ts-ignore
-			(enter) => {
-				enter
-					.append('line')
-					.attr('x1', (d, i) => lineXScale.value(d))
-					.attr('x2', (d, i) => lineXScale.value(d))
-					.attr('y1', (d, i) => 0)
-					.attr('y2', (d, i) => lineChartHeight.value)
-					.attr('fill', 'none')
-					.attr('stroke', 'white')
-					.attr('stroke-width', 4)
-					.classed('time', true)
-					// @ts-ignore
-					.call(drag)
-			},
-			(update) => {
-				update
-					.transition()
-					.duration(resizing ? 0 : stepLength.value / 3)
-					.attr('x1', (d, i) => lineXScale.value(d))
-					.attr('x2', (d, i) => lineXScale.value(d))
-					.attr('y2', (d, i) => lineChartHeight.value)
-			},
-		)
-}
-
-function drawLCAxes(resizing = false) {
-	const chartContainer = d3.select(lineChartRef.value).select('#chart')
-	const axes = chartContainer.select('g#axes')
-	axes.selectAll('g.axis').remove()
-
-	const xAxis = d3.axisBottom(lineXScale.value).ticks(10)
-	axes
-		.append('g')
-		.attr('class', 'axis')
-		.attr('transform', `translate(0, ${lineChartHeight.value})`)
-		.call(xAxis)
-
-	const yAxis = d3
-		.axisLeft(lineEqScale.value)
-		.ticks(5)
-		.tickFormat(d3.format('.2s'))
-	axes.append('g').attr('class', 'axis').call(yAxis)
 }
 
 function drawHighlight() {
@@ -551,16 +373,16 @@ watch(
 )
 onMounted(() => {
 	setSizes(true)
-	// draw()
+	draw()
 	window.addEventListener('resize', () => {
 		setSizes(true)
-		draw(true)
+		draw()
 	})
 })
 </script>
 
 <template>
-	<div class="charts">
+	<div class="chart">
 		<svg class="chart-svg" ref="chartRef">
 			<defs>
 				<pattern
@@ -577,16 +399,9 @@ onMounted(() => {
 				<g id="bars"></g>
 			</g>
 		</svg>
-		<svg class="line-chart-svg" ref="lineChartRef">
-			<g id="chart" :class="{ hidden: store.equityOuts.length > 0 }">
-				<g id="axes"></g>
-				<g id="lines"></g>
-				<g id="decor"></g>
-			</g>
-		</svg>
 		<div class="buttons">
 			<p class="label">
-				Step {{ store.modelI }} / {{ store.equityOuts.length - 1 }}
+				Step {{ store.modelI + 1 }} / {{ store.equityOuts.length }}
 			</p>
 			<button
 				@click="
@@ -596,7 +411,6 @@ onMounted(() => {
 						draw()
 					}
 				"
-				:disabled="store.modelI <= 0"
 			>
 				<fa-icon icon="backward-fast"></fa-icon>
 			</button>
@@ -608,11 +422,10 @@ onMounted(() => {
 						draw()
 					}
 				"
-				:disabled="store.modelI <= 0"
 			>
 				<fa-icon icon="backward-step"></fa-icon>
 			</button>
-			<button @click="startAnimation" :disabled="store.equityOuts.length < 2">
+			<button @click="startAnimation">
 				<fa-icon :icon="store.animating ? 'pause' : 'play'"></fa-icon>
 			</button>
 			<button
@@ -623,7 +436,6 @@ onMounted(() => {
 						draw()
 					}
 				"
-				:disabled="store.modelI >= store.equityOuts.length - 1"
 			>
 				<fa-icon icon="forward-step"></fa-icon>
 			</button>
@@ -635,7 +447,6 @@ onMounted(() => {
 						draw()
 					}
 				"
-				:disabled="store.modelI >= store.equityOuts.length - 1"
 			>
 				<fa-icon icon="forward-fast"></fa-icon>
 			</button>
@@ -647,13 +458,13 @@ onMounted(() => {
 <style lang="scss">
 @import '@/assets/styles/scssVars.scss';
 
-.charts {
+.chart {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 
 	.chart-svg {
-		flex: 1 1 70%;
+		flex: 1 1 100%;
 		background-color: $bgContrast;
 		height: 100%;
 
@@ -672,23 +483,6 @@ onMounted(() => {
 				fill-opacity: 0.85;
 				stroke-width: 1px;
 				stroke: white;
-			}
-		}
-	}
-
-	.line-chart-svg {
-		flex: 1 1 30%;
-		background-color: $bgContrast;
-		height: 100%;
-		margin-top: 0.5rem;
-
-		line {
-			&.time {
-				stroke-width: 12px;
-				stroke-linecap: round;
-				opacity: 0.5;
-				stroke: white;
-				cursor: pointer;
 			}
 		}
 	}
@@ -719,11 +513,6 @@ onMounted(() => {
 
 			&:hover {
 				background-color: $bg;
-			}
-
-			&:disabled {
-				opacity: 0.5;
-				cursor: not-allowed;
 			}
 		}
 	}

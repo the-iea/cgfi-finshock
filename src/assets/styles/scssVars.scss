@@ -1,9 +1,15 @@
-$bg: rgb(0, 43, 54);
-$bgContrast: rgb(7, 54, 66);
-$buttonColor: rgb(11, 82, 100);
-$textColor: rgb(247, 251, 253);
-$primary: rgb(42, 161, 152);
-$highlight: rgb(211, 54, 130);
+// $bg: rgb(0, 43, 54);
+// $bgContrast: rgb(7, 54, 66);
+// $buttonColor: rgb(11, 82, 100);
+// $textColor: rgb(247, 251, 253);
+// $primary: rgb(42, 161, 152);
+
+$bg: rgb(34, 34, 34); // Dark gray background
+$bgContrast: rgb(64, 64, 64); // Even darker gray for contrast
+$buttonColor: rgb(76, 175, 80); // Green for buttons
+$textColor: rgb(221, 221, 221); // Light gray for text
+$dimTextColor: rgb(186, 184, 184); // Light gray for text
+$primary: rgb(128, 187, 177);
 
 $animTime: 0.25s;
 

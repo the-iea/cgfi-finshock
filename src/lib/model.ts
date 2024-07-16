@@ -279,16 +279,6 @@ function iterateModel(
 		}
 	}
 
-	// if (Type === 'Distress') {
-	// 	valuations = distressVal(L, Le, E, k, R, a, b)
-	// } else if (Type === 'Merton') {
-	// 	valuations = mertonVal(Ae, X, E, R, volatility, maturityT)
-	// } else if (Type === 'Black') {
-	// 	valuations = blackVal(Ae, X, E, R, volatility, maturityT)
-	// } else {
-	// 	throw new Error('Unknown Type specified.')
-	// }
-	// effectiveAssetVals.push(getCopy(valuations))
 	// Now calculate E(1) and push it to eqVals
 	for (let i = 0; i < Ae.length; i++) {
 		E[i] = Ae[i] - X[i] + colSum(L, i) - rowSum(L, i) - Le[i]

@@ -7,7 +7,7 @@ const $l = useLabels()
 
 <template>
 	<header>
-		<div id="header-title">{{ $l.title }}</div>
+		<h1>{{ $l.title }}</h1>
 		<!-- <div id="header-menu">
 			<router-link :to="{ name: 'Main' }">{{ $l.main }}</router-link>
 		</div> -->
@@ -22,29 +22,6 @@ header {
 	display: flex;
 	align-items: center;
 	background-color: $bgContrast;
-	padding-bottom: $gap;
-
-	#header-title {
-		font-size: 1.5rem;
-		font-weight: 900;
-		color: $primary;
-		margin-left: 1rem;
-	}
-	#header-menu {
-		margin-left: auto;
-		margin-right: 1rem;
-		display: flex;
-
-		a {
-			margin: 0 1rem;
-			font-size: 1.2rem;
-			text-decoration: none;
-
-			&.router-link-active {
-				color: $primary;
-				cursor: default;
-			}
-		}
-	}
+	margin-bottom: $gap;
 }
 </style>

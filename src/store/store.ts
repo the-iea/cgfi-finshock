@@ -37,7 +37,7 @@ function mulberry32(a: number) {
 }
 
 const getRand = mulberry32(123)
-const transpose = (matrix: any[][]) =>
+export const transpose = (matrix: any[][]) =>
 	matrix[0].map((_, col) => matrix.map((row) => row[col]))
 
 const randomiseInputs = (nodes: number) => {

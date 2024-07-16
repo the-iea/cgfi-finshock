@@ -51,26 +51,25 @@ const importData = () => {
 			<button class="addremove" @click="store.addNode">+</button>
 			<button class="addremove" @click="store.removeNode">-</button>
 		</div>
-		<div class="control">
-			<p>
+		<div class="control info">
+			<label>
 				{{ $l.equityIs }}:
 				{{
 					store.equityOuts.length > store.modelI
 						? store.equityOuts[store.modelI][store.selectedNode].toFixed(2)
 						: 'N/A'
 				}}
-			</p>
-		</div>
-		<div class="control">
-			<p>
+			</label>
+			<label>
 				{{ $l.valueIs }}:
 				{{
 					store.effectiveValues.length > store.modelI
 						? store.effectiveValues[store.modelI][store.selectedNode].toFixed(3)
 						: 'N/A'
 				}}
-			</p>
+			</label>
 		</div>
+		<div class="spacer"></div>
 		<div class="control">
 			<label for="shock">{{ $l.shock }}</label>
 			<input
@@ -171,10 +170,10 @@ const importData = () => {
 		</div>
 
 		<div class="spacer"></div>
-		<div class="control Ltitle">
+		<div class="control">
 			<label> </label>
-			<label> Owes</label>
-			<label> Owed by</label>
+			<label class="Ltitle"> Owes</label>
+			<label class="Ltitle"> Owed by</label>
 		</div>
 		<div
 			class="control"
@@ -222,6 +221,11 @@ const importData = () => {
 	display: flex;
 	flex-direction: column;
 	overflow-y: scroll;
+	margin: 0.5rem;
+
+	#node {
+		margin-bottom: 0;
+	}
 
 	&.disabled {
 		pointer-events: none;
@@ -232,21 +236,37 @@ const importData = () => {
 		align-items: center;
 		display: flex;
 		flex-direction: row;
+		justify-content: space-around;
 
 		label {
-			flex: 1 0 10rem;
+			flex: 1 0 7rem;
 			text-align: right;
 			padding-right: 1rem;
+			color: $primary;
+			&.Ltitle {
+				flex: 1 0 30%;
+				text-align: center;
+			}
 		}
 
-		&.Ltitle label {
-			flex: 1 0 30%;
-			text-align: center;
+		&.info {
+			margin: 0.5rem 0;
+			label {
+				flex: 1 1 10%;
+				text-align: center;
+				margin: 0.25rem;
+				font-size: 1.2rem;
+				color: $textColor;
+			}
 		}
 
 		.ui {
 			flex: 1 1 70%;
 			min-width: 0;
+
+			&.lmat:last-child {
+				margin-left: 1rem;
+			}
 
 			&.lmat {
 				flex: 1 1 35%;
@@ -271,8 +291,25 @@ const importData = () => {
 		font-size: 1.5rem;
 		cursor: pointer;
 		transition: background-color 0.3s ease;
+		margin: 0.1rem;
 		&:hover {
 			background-color: #999;
+		}
+	}
+
+	.import {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		border-radius: 0.5rem;
+		background-color: $buttonColor;
+		color: $textColor;
+		font-size: 1rem;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+		&:hover {
+			background-color: darken($buttonColor, 10%);
 		}
 	}
 }

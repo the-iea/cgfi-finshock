@@ -124,8 +124,8 @@ Results[[1]] - tail(Results,1)[[1]] #calculate equity losses
 ########################################################################
 #Generation of liabilities matrix 
 set.seed(123) #reproducability
-n_rows <- 100 #number of rows 
-n_cols <- 100 #number of columns 
+n_rows <- 1000 #number of rows 
+n_cols <- 1000 #number of columns 
 p <- 0.5 #probability entry in the liabilities matrix 
 data <- rbinom(n_rows * n_cols, size = 1, prob = p)*runif(n_rows*n_cols, min = 0, max = 10) #generate binary values and assign weights
 MatL <- matrix(data, n_rows, n_cols) #restructure into matrix 
