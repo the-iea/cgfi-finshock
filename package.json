@@ -35,8 +35,11 @@
 		"papaparse": "^5.4.1",
 		"pinia": "^2.0.35",
 		"promise-worker": "^2.0.1",
+		"shepherd.js": "^13.0.1",
+		"v-onboarding": "^2.8.2",
 		"vue": "^3.2.47",
 		"vue-router": "^4.1.6",
+		"vue-shepherd": "^3.0.0",
 		"vue3-loading-overlay": "^0.0.0"
 	}
 }

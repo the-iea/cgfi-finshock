@@ -24,5 +24,9 @@ export default defineConfig(({ command, mode }) => {
 				scss: {},
 			},
 		},
+		define: {
+			// To get around badly-written libraries which rely on using npm for development (*cough, cough* vue-shepherd, *cough, cough*)
+			'process.env': {},
+		},
 	}
 })

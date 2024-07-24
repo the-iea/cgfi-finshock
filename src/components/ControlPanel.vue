@@ -70,7 +70,7 @@ const importData = () => {
 			</label>
 		</div>
 		<div class="spacer"></div>
-		<div class="control">
+		<div class="control" id="shockControl">
 			<label for="shock">{{ $l.shock }}</label>
 			<input
 				class="ui"
@@ -103,113 +103,124 @@ const importData = () => {
 			/>
 		</div>
 		<div class="spacer" />
-		<div class="control">
-			<label for="valueFunc">{{ $l.valueFunc }}</label>
-			<select class="ui" id="valueFunc" v-model="store.valueFunc">
-				<option value="Distress">Distress</option>
-				<option value="Merton">Merton</option>
-				<option value="Black">Black</option>
-			</select>
+		<div id="valuation">
+			<div class="control">
+				<label for="valueFunc">{{ $l.valueFunc }}</label>
+				<select class="ui" id="valueFunc" v-model="store.valueFunc">
+					<option value="Distress">Distress</option>
+					<option value="Merton">Merton</option>
+					<option value="Black">Black</option>
+				</select>
+			</div>
+			<div class="control">
+				<label for="recoveryRate">{{ $l.recoveryRate }}</label>
+				<input
+					class="ui"
+					id="recoveryRate"
+					type="number"
+					min="0"
+					max="1"
+					step="0.1"
+					v-model="store.R"
+				/>
+			</div>
+			<div class="control" v-show="store.valueFunc === 'Distress'">
+				<label for="alpha">{{ $l.alphabeta }}</label>
+				<input
+					class="ui lmat"
+					id="alpha"
+					type="number"
+					min="0"
+					max="1"
+					step="0.1"
+					v-model="store.alpha"
+				/>
+				<input
+					class="ui lmat"
+					id="beta"
+					type="number"
+					min="0"
+					max="1"
+					step="0.1"
+					v-model="store.beta"
+				/>
+			</div>
+			<div class="control" v-show="store.valueFunc !== 'Distress'">
+				<label for="volatility">{{ $l.volatility }}</label>
+				<input
+					class="ui"
+					id="volatility"
+					type="number"
+					min="0"
+					max="1"
+					step="0.1"
+					v-model="store.volatility"
+				/>
+			</div>
+			<div class="control" v-show="store.valueFunc !== 'Distress'">
+				<label for="maturity">{{ $l.maturity }}</label>
+				<input
+					class="ui"
+					id="maturity"
+					type="number"
+					min="0"
+					max="50"
+					step="1"
+					v-model="store.maturity"
+				/>
+			</div>
 		</div>
-		<div class="control">
-			<label for="recoveryRate">{{ $l.recoveryRate }}</label>
-			<input
-				class="ui"
-				id="recoveryRate"
-				type="number"
-				min="0"
-				max="1"
-				step="0.1"
-				v-model="store.R"
-			/>
-		</div>
-		<div class="control" v-show="store.valueFunc === 'Distress'">
-			<label for="alpha">{{ $l.alphabeta }}</label>
-			<input
-				class="ui lmat"
-				id="alpha"
-				type="number"
-				min="0"
-				max="1"
-				step="0.1"
-				v-model="store.alpha"
-			/>
-			<input
-				class="ui lmat"
-				id="beta"
-				type="number"
-				min="0"
-				max="1"
-				step="0.1"
-				v-model="store.beta"
-			/>
-		</div>
-		<div class="control" v-show="store.valueFunc !== 'Distress'">
-			<label for="volatility">{{ $l.volatility }}</label>
-			<input
-				class="ui"
-				id="volatility"
-				type="number"
-				min="0"
-				max="1"
-				step="0.1"
-				v-model="store.volatility"
-			/>
-		</div>
-		<div class="control" v-show="store.valueFunc !== 'Distress'">
-			<label for="maturity">{{ $l.maturity }}</label>
-			<input
-				class="ui"
-				id="maturity"
-				type="number"
-				min="0"
-				max="50"
-				step="1"
-				v-model="store.maturity"
-			/>
-		</div>
-
 		<div class="spacer"></div>
 		<div class="control">
 			<label> </label>
 			<label class="Ltitle"> Owes</label>
 			<label class="Ltitle"> Owed by</label>
 		</div>
-		<div
-			class="control"
-			v-for="i in store.nNodes"
-			:key="i"
-			v-show="i - 1 != store.selectedNode"
-		>
-			<label :for="'owes' + i">{{
-				store.nodeIds !== null && store.nodeIds[i - 1]
-					? store.nodeIds[i - 1]
-					: i - 1
-			}}</label>
-			<input
-				class="ui lmat"
-				:id="'owes' + i"
-				type="number"
-				min="0"
-				step="10"
-				v-model="store.liabilityMatrix[store.selectedNode][i - 1]"
-				@focus="
-					store.selectedLiability = { from: store.selectedNode, to: i - 1 }
-				"
-				@blur="store.selectedLiability = null"
-			/>
-			<input
-				class="ui lmat"
-				:id="'owed' + i"
-				type="number"
-				min="0"
-				step="10"
-				v-model="store.liabilityMatrix[i - 1][store.selectedNode]"
-				@focus="
-					store.selectedLiability = { to: store.selectedNode, from: i - 1 }
-				"
-				@blur="store.selectedLiability = null"
-			/>
+		<div id="liabilityMatrix">
+			<div
+				class="control"
+				v-for="i in store.nNodes"
+				:key="i"
+				v-show="i - 1 != store.selectedNode"
+			>
+				<label :for="'owes' + i">{{
+					store.nodeIds !== null && store.nodeIds[i - 1]
+						? store.nodeIds[i - 1]
+						: i - 1
+				}}</label>
+				<input
+					class="ui lmat"
+					:id="'owes' + i"
+					type="number"
+					min="0"
+					step="10"
+					v-model="store.liabilityMatrix[store.selectedNode][i - 1]"
+					@focus="
+						store.selectedLiability = { from: store.selectedNode, to: i - 1 }
+					"
+					@blur="
+						() => {
+							if (!store.tutorialOn) store.selectedLiability = null
+						}
+					"
+				/>
+				<input
+					class="ui lmat"
+					:id="'owed' + i"
+					type="number"
+					min="0"
+					step="10"
+					v-model="store.liabilityMatrix[i - 1][store.selectedNode]"
+					@focus="
+						store.selectedLiability = { to: store.selectedNode, from: i - 1 }
+					"
+					@blur="
+						() => {
+							if (!store.tutorialOn) store.selectedLiability = null
+						}
+					"
+				/>
+			</div>
 		</div>
 	</div>
 </template>
@@ -292,9 +303,6 @@ const importData = () => {
 		cursor: pointer;
 		transition: background-color 0.3s ease;
 		margin: 0.1rem;
-		&:hover {
-			background-color: #999;
-		}
 	}
 
 	.import {

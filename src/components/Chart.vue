@@ -536,6 +536,12 @@ watch(
 	},
 )
 watch(
+	() => store.modelI,
+	() => {
+		draw()
+	},
+)
+watch(
 	() => {
 		let ls
 		if (store.selectedLiability) {
@@ -543,9 +549,11 @@ watch(
 		} else {
 			ls = [null, null]
 		}
+		console.log('liability chabged to ', ls)
 		return [store.selectedNode, ...ls]
 	},
 	() => {
+		console.log('drawing highlight')
 		drawHighlight()
 	},
 )
@@ -577,7 +585,7 @@ onMounted(() => {
 				<g id="bars"></g>
 			</g>
 		</svg>
-		<svg class="line-chart-svg" ref="lineChartRef">
+		<svg class="line-chart-svg" id="lineChart" ref="lineChartRef">
 			<g id="chart" :class="{ hidden: store.equityOuts.length > 0 }">
 				<g id="axes"></g>
 				<g id="lines"></g>
@@ -585,7 +593,7 @@ onMounted(() => {
 			</g>
 		</svg>
 		<div class="buttons">
-			<p class="label">
+			<p class="label" id="noSteps">
 				Step {{ store.modelI }} / {{ store.equityOuts.length - 1 }}
 			</p>
 			<button
@@ -716,10 +724,6 @@ onMounted(() => {
 			color: white;
 			border: none;
 			cursor: pointer;
-
-			&:hover {
-				background-color: $bg;
-			}
 
 			&:disabled {
 				opacity: 0.5;

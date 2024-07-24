@@ -1,22 +1,48 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import 'vue3-loading-overlay/dist/vue3-loading-overlay.css'
 import Loading from 'vue3-loading-overlay'
 import AppHeader from '@/components/common/AppHeader.vue'
-import AppFooter from '@/components/common/Footer.vue'
-import { useLabels } from '@/lib/labels'
+import { useLabels, getTutorial } from '@/lib/labels'
 import { useStore } from '@/store/store'
+import { VOnboardingWrapper, useVOnboarding } from 'v-onboarding'
+import 'v-onboarding/dist/style.css'
+import 'shepherd.js/dist/css/shepherd.css'
+
+import { useShepherd } from 'vue-shepherd'
 
 const l = useLabels()
 const store = useStore()
 
+const wrapper = ref<HTMLElement | null>(null)
+const { start, goToStep, finish } = useVOnboarding(wrapper)
+
+const options = {
+	overlay: {
+		enabled: true,
+		padding: 0,
+		borderRadius: 0,
+		preventOverlayInteraction: false,
+	},
+}
+
+const tour = useShepherd({
+	useModalOverlay: true,
+})
+
 onMounted(() => {
 	document.title = l.value.title
+	// start()
+
+	tour.addSteps(getTutorial(tour, store))
+
+	tour.start()
 })
 </script>
 
 <template>
 	<loading :active="store.isLoading" :isFullPage="true" id="loading"></loading>
+	<!-- <VOnboardingWrapper ref="wrapper" :steps="tutorial" :options="options" /> -->
 	<AppHeader id="header" />
 	<router-view id="main"></router-view>
 	<!-- <AppFooter id="footer" /> -->
@@ -57,8 +83,28 @@ onMounted(() => {
 		padding: $gap;
 	}
 
-	// #footer {
-	// 	grid-area: footer;
-	// }
+	.v-onboarding-item__header-title {
+		color: black;
+	}
+
+	button.v-onboarding-item__header-close {
+		padding: 0;
+		background-color: white;
+		color: black;
+
+		&:focus {
+			outline: none;
+		}
+
+		&:hover {
+			background-color: darken(white, 10%);
+		}
+	}
+	.v-onboarding-item__actions button.v-onboarding-btn-primary {
+		background-color: $buttonColor;
+	}
+	.v-onboarding-item__actions button.v-onboarding-btn-primary:hover {
+		background-color: darken($buttonColor, 10%);
+	}
 }
 </style>

@@ -3,7 +3,9 @@ import worker from '@/lib/worker'
 import Papa from 'papaparse'
 import { defineStore } from 'pinia'
 
-interface State {
+export type Scenario = 'emergent' | 'simple'
+
+export interface State {
 	nodeIds: string[] | null
 	nodeGroups: string[] | null
 	extAssets: number[]
@@ -25,6 +27,8 @@ interface State {
 	lang: string
 	loadingCount: number
 	updating: boolean
+	tutorialOn: boolean
+	selectedScenario: Scenario
 }
 
 function mulberry32(a: number) {
@@ -91,7 +95,7 @@ export const useStore = defineStore('main', {
 
 		// extAssets = [100, 100, 100, 100, 100, 100]
 		// extLiabilities = [0, 0, 0, 0, 0, 0]
-		// shock = [0, 0, 0, 0, 0, 100]
+		// shock = [50, 0, 0, 0, 0, 0]
 		// liabilityMatrix = [
 		// 	[0, 50, 70, 0, 0, 0],
 		// 	[0, 0, 50, 70, 0, 0],
@@ -123,6 +127,8 @@ export const useStore = defineStore('main', {
 			loadingCount: 0,
 			lang: 'en',
 			updating: false,
+			tutorialOn: false,
+			selectedScenario: 'emergent',
 		}
 		return s
 	},
@@ -270,6 +276,38 @@ export const useStore = defineStore('main', {
 				console.log(nodes, t2 - t1)
 			}
 			console.log(results)
+		},
+		selectScenario(scenario: Scenario) {
+			this.selectedScenario = scenario
+			if (scenario == 'emergent') {
+				this.extAssets = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+				this.extLiabilities = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+				this.shock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 90]
+				this.liabilityMatrix = [
+					[0, 51, 0, 0, 0, 20, 50, 0, 0, 0],
+					[0, 0, 50, 0, 0, 0, 0, 0, 0, 0],
+					[0, 50, 0, 50, 0, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 50, 0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0, 50, 0, 50, 0, 0],
+					[0, 0, 0, 0, 0, 0, 30, 50, 50, 0],
+					[0, 0, 0, 0, 0, 0, 0, 50, 50, 50],
+					[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
+					[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
+					[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+				]
+			} else if (scenario == 'simple') {
+				this.extAssets = [100, 100, 100, 100, 100, 100]
+				this.extLiabilities = [0, 0, 0, 0, 0, 0]
+				this.shock = [50, 0, 0, 0, 0, 0]
+				this.liabilityMatrix = [
+					[0, 50, 70, 0, 0, 0],
+					[0, 0, 50, 70, 0, 0],
+					[0, 0, 0, 50, 70, 0],
+					[0, 0, 0, 0, 50, 70],
+					[70, 0, 0, 0, 0, 50],
+					[50, 70, 0, 0, 0, 0],
+				]
+			}
 		},
 	},
 })
