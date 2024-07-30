@@ -12,7 +12,7 @@
 	"devDependencies": {
 		"@types/d3": "^7.4.0",
 		"@types/js-cookie": "^3.0.3",
-		"@types/papaparse": "^5.3.7",
+		"@types/papaparse": "^5.3.14",
 		"@typescript-eslint/parser": "^6.18.1",
 		"@vitejs/plugin-vue": "^5.0.3",
 		"eslint": "^8.38.0",

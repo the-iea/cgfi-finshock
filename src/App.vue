@@ -5,8 +5,6 @@ import Loading from 'vue3-loading-overlay'
 import AppHeader from '@/components/common/AppHeader.vue'
 import { useLabels, getTutorial } from '@/lib/labels'
 import { useStore } from '@/store/store'
-import { VOnboardingWrapper, useVOnboarding } from 'v-onboarding'
-import 'v-onboarding/dist/style.css'
 import 'shepherd.js/dist/css/shepherd.css'
 
 import { useShepherd } from 'vue-shepherd'
@@ -14,25 +12,12 @@ import { useShepherd } from 'vue-shepherd'
 const l = useLabels()
 const store = useStore()
 
-const wrapper = ref<HTMLElement | null>(null)
-const { start, goToStep, finish } = useVOnboarding(wrapper)
-
-const options = {
-	overlay: {
-		enabled: true,
-		padding: 0,
-		borderRadius: 0,
-		preventOverlayInteraction: false,
-	},
-}
-
 const tour = useShepherd({
 	useModalOverlay: true,
 })
 
 onMounted(() => {
 	document.title = l.value.title
-	// start()
 
 	tour.addSteps(getTutorial(tour, store))
 
@@ -42,7 +27,6 @@ onMounted(() => {
 
 <template>
 	<loading :active="store.isLoading" :isFullPage="true" id="loading"></loading>
-	<!-- <VOnboardingWrapper ref="wrapper" :steps="tutorial" :options="options" /> -->
 	<AppHeader id="header" />
 	<router-view id="main"></router-view>
 	<!-- <AppFooter id="footer" /> -->

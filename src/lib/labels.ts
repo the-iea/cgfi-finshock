@@ -79,19 +79,8 @@ export const getTutorial = (tour: any, store: Store<string, State>) => [
 		],
 		when: {
 			show: () => {
-				store.extAssets = [100, 100, 100, 100, 100, 100]
-				store.extLiabilities = [0, 0, 0, 0, 0, 0]
-				store.shock = [0, 0, 0, 0, 0, 0]
-				store.liabilityMatrix = [
-					[0, 50, 70, 0, 0, 0],
-					[0, 0, 50, 70, 0, 0],
-					[0, 0, 0, 50, 70, 0],
-					[0, 0, 0, 0, 50, 70],
-					[70, 0, 0, 0, 0, 50],
-					[50, 70, 0, 0, 0, 0],
-				]
+				store.selectScenario('simple')
 				store.selectedNode = 0
-				store.tutorialOn = true
 			},
 		},
 	},

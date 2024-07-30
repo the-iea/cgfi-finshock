@@ -12,10 +12,10 @@ const lineChartRef = ref(null) as unknown as Ref<HTMLElement>
 const width = ref(0)
 const height = ref(0)
 const margin = ref({
-	top: 20,
-	right: 20,
-	bottom: 20,
-	left: 20,
+	top: 10,
+	right: 10,
+	bottom: 10,
+	left: 10,
 })
 
 const lineChartWidth = ref(0)
@@ -264,7 +264,7 @@ function drawGraph(resizing = false) {
 	const graphContainer = d3.select(chartRef.value).select('#graph')
 	graphContainer.attr(
 		'transform',
-		`translate(${width.value / 2}, ${height.value / 2})`,
+		`translate(${margin.value.left + width.value / 2}, ${margin.value.top + height.value / 2})`,
 	)
 
 	chord.padAngle(12 / (innerRadius.value * store.nNodes))
@@ -549,11 +549,9 @@ watch(
 		} else {
 			ls = [null, null]
 		}
-		console.log('liability chabged to ', ls)
 		return [store.selectedNode, ...ls]
 	},
 	() => {
-		console.log('drawing highlight')
 		drawHighlight()
 	},
 )

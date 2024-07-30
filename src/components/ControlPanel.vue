@@ -2,7 +2,7 @@
 import { onMounted, watch, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLabels } from '@/lib/labels'
-import { useStore } from '@/store/store'
+import { useStore, scenarios } from '@/store/store'
 
 const $l = useLabels()
 const store = useStore()
@@ -25,9 +25,12 @@ watch(
 	},
 )
 
-const importData = () => {
-	store.importData()
-}
+watch(
+	() => store.selectedScenario,
+	() => {
+		store.selectScenario(store.selectedScenario)
+	},
+)
 </script>
 
 <template>
@@ -36,7 +39,17 @@ const importData = () => {
 		class="controls"
 		:class="{ disabled: store.animating }"
 	>
-		<button @click="importData" class="import">Import data</button>
+		<div class="scenarios">
+			<select class="ui" id="scenario" v-model="store.selectedScenario">
+				<option v-for="(scenario, id) in scenarios" :key="id" :value="id">
+					{{ scenario.name }}
+				</option>
+			</select>
+			<button @click="store.importData" class="import">Import data</button>
+			<button @click="store.randomise" class="randomise">
+				Randomise network
+			</button>
+		</div>
 		<div class="control">
 			<label for="node">{{ $l.selNode }}</label>
 			<select class="ui" id="node" v-model="store.selectedNode">
@@ -200,7 +213,7 @@ const importData = () => {
 					"
 					@blur="
 						() => {
-							if (!store.tutorialOn) store.selectedLiability = null
+							store.selectedLiability = null
 						}
 					"
 				/>
@@ -216,7 +229,7 @@ const importData = () => {
 					"
 					@blur="
 						() => {
-							if (!store.tutorialOn) store.selectedLiability = null
+							store.selectedLiability = null
 						}
 					"
 				/>
