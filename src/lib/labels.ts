@@ -79,6 +79,7 @@ export const getTutorial = (tour: any, store: Store<string, State>) => [
 		],
 		when: {
 			show: () => {
+				// @ts-ignore
 				store.selectScenario('simple')
 				store.selectedNode = 0
 			},
