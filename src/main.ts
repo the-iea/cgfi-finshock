@@ -7,6 +7,7 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import {
 	faBackwardFast,
 	faBackwardStep,
+	faClose,
 	faForwardFast,
 	faForwardStep,
 	faPause,
@@ -23,6 +24,7 @@ library.add(
 	faBackwardStep,
 	faForwardFast,
 	faBackwardFast,
+	faClose,
 )
 
 const app = createApp(App)

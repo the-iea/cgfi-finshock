@@ -6,10 +6,14 @@
 
 $bg: rgb(34, 34, 34); // Dark gray background
 $bgContrast: rgb(64, 64, 64); // Even darker gray for contrast
-$buttonColor: rgb(76, 175, 80); // Green for buttons
 $textColor: rgb(221, 221, 221); // Light gray for text
 $dimTextColor: rgb(186, 184, 184); // Light gray for text
 $primary: rgb(128, 187, 177);
+$helpColor: rgb(128, 187, 177);
+// $helpColor: rgb(76, 175, 80); // Green for buttons
+$buttonColor: rgb(58, 84, 188);
+// $buttonColor: rgb(76, 175, 80); // Green for buttons
+$closeColor: rgb(175, 76, 76);
 
 $animTime: 0.25s;
 

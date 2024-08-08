@@ -21,7 +21,8 @@ onMounted(() => {
 
 	tour.addSteps(getTutorial(tour, store))
 
-	tour.start()
+	// tour.start()
+	console.warn('Tour disabled')
 })
 </script>
 
@@ -35,6 +36,10 @@ onMounted(() => {
 <style lang="scss">
 @import '@/assets/styles/main.scss';
 @import '@/assets/styles/scssVars.scss';
+
+.csv-table {
+	min-width: 42rem;
+}
 
 #app {
 	width: 100vw;

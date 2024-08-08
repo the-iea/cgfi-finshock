@@ -3,7 +3,6 @@ import worker from '@/lib/worker'
 import Papa from 'papaparse'
 import { defineStore } from 'pinia'
 
-export type ScenarioId = 'emergent' | 'simple' | 'fragile' | 'stable'
 export type Scenario = {
 	name: string
 	extAssets: number[]
@@ -35,7 +34,7 @@ export interface State {
 	lang: string
 	loadingCount: number
 	updating: boolean
-	selectedScenario: ScenarioId
+	choosingScenario: boolean
 }
 
 function mulberry32(a: number) {
@@ -71,6 +70,20 @@ const randomiseInputs = (nodes: number) => {
 }
 
 export const scenarios: any = {
+	simple: {
+		name: 'Simple',
+		extAssets: [100, 100, 100, 100, 100, 100],
+		extLiabilities: [0, 0, 0, 0, 0, 0],
+		shock: [50, 0, 0, 0, 0, 0],
+		liabilityMatrix: [
+			[0, 50, 70, 0, 0, 0],
+			[0, 0, 50, 70, 0, 0],
+			[0, 0, 0, 50, 70, 0],
+			[0, 0, 0, 0, 50, 70],
+			[70, 0, 0, 0, 0, 50],
+			[50, 70, 0, 0, 0, 0],
+		],
+	},
 	emergent: {
 		name: 'Cyclical',
 		extAssets: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
@@ -87,20 +100,6 @@ export const scenarios: any = {
 			[0, 0, 0, 0, 0, 0, 0, 0, 50, 50],
 			[0, 0, 0, 0, 0, 0, 0, 0, 0, 50],
 			[50, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-		],
-	},
-	simple: {
-		name: 'Simple',
-		extAssets: [100, 100, 100, 100, 100, 100],
-		extLiabilities: [0, 0, 0, 0, 0, 0],
-		shock: [50, 0, 0, 0, 0, 0],
-		liabilityMatrix: [
-			[0, 50, 70, 0, 0, 0],
-			[0, 0, 50, 70, 0, 0],
-			[0, 0, 0, 50, 70, 0],
-			[0, 0, 0, 0, 50, 70],
-			[70, 0, 0, 0, 0, 50],
-			[50, 70, 0, 0, 0, 0],
 		],
 	},
 	fragileMD: {
@@ -461,7 +460,7 @@ export const useStore = defineStore('main', {
 			loadingCount: 0,
 			lang: 'en',
 			updating: false,
-			selectedScenario,
+			choosingScenario: false,
 		}
 		return s
 	},
@@ -567,9 +566,15 @@ export const useStore = defineStore('main', {
 						this.extLiabilities = []
 						this.shock = []
 						this.liabilityMatrix = []
+						let nodeId = 0
 						for (let line of results.data as any[][]) {
-							this.nodeIds.push(line[0])
-							this.nodeGroups.push(line[1])
+							if (line[0].trim() !== '') {
+								this.nodeIds.push(line[0])
+							} else {
+								this.nodeIds.push(`Bank ${nodeId++}`)
+							}
+
+							if (line[1].trim() !== '') this.nodeGroups.push(line[1])
 							this.extAssets.push(line[2])
 							this.extLiabilities.push(line[3])
 							this.shock.push(0)
@@ -612,16 +617,21 @@ export const useStore = defineStore('main', {
 				console.log(nodes, t2 - t1)
 			}
 		},
-		selectScenario(scenario: ScenarioId) {
+		selectScenario(scenario: string) {
 			this.updating = true
 			this.nodeGroups = scenarios[scenario].nodeGroups
-			this.selectedScenario = scenario
+				? scenarios[scenario].nodeGroups
+				: null
 			this.extAssets = scenarios[scenario].extAssets
 			this.extLiabilities = scenarios[scenario].extLiabilities
 			this.shock = scenarios[scenario].shock
 			this.modelI = 0
+			this.choosingScenario = false
 			this.updating = false
 			this.liabilityMatrix = scenarios[scenario].liabilityMatrix
+		},
+		chooseScenario() {
+			this.choosingScenario = true
 		},
 		randomise() {
 			this.updating = true

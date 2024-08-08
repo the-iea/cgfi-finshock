@@ -15,6 +15,7 @@ const labelsEn = {
 	owes: 'Owes',
 	owed: 'Owed by',
 	shock: 'Shock',
+	selScenario: 'Select scenario',
 	extAsset: 'Ext. assets',
 	extLiability: 'Ext. liabilities',
 	valueFunc: 'Valuation function',
