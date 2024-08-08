@@ -32,7 +32,7 @@ let tour = useShepherd({
 	useModalOverlay: true,
 })
 
-const helpSteps = {
+const helpSteps: { [key: string]: any } = {
 	chooseScenario: [
 		{
 			id: 'chooseScenario',
@@ -153,7 +153,6 @@ const help = (event: MouseEvent, id: string) => {
 	tour = useShepherd({
 		useModalOverlay: true,
 	})
-	console.log('help', id, helpSteps[id])
 	tour.addSteps(helpSteps[id])
 	tour.start()
 }
