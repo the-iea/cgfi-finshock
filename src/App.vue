@@ -20,9 +20,7 @@ onMounted(() => {
 	document.title = l.value.title
 
 	tour.addSteps(getTutorial(tour, store))
-
-	// tour.start()
-	console.warn('Tour disabled')
+	tour.start()
 })
 </script>
 
@@ -71,29 +69,8 @@ onMounted(() => {
 		max-height: calc(100vh - $headerHeight - 2 * $gap);
 		padding: $gap;
 	}
-
-	.v-onboarding-item__header-title {
-		color: black;
-	}
-
-	button.v-onboarding-item__header-close {
-		padding: 0;
-		background-color: white;
-		color: black;
-
-		&:focus {
-			outline: none;
-		}
-
-		&:hover {
-			background-color: darken(white, 10%);
-		}
-	}
-	.v-onboarding-item__actions button.v-onboarding-btn-primary {
-		background-color: $buttonColor;
-	}
-	.v-onboarding-item__actions button.v-onboarding-btn-primary:hover {
-		background-color: darken($buttonColor, 10%);
-	}
+}
+button.shepherd-cancel-icon:hover {
+	background-color: rgba(0, 0, 0, 0);
 }
 </style>

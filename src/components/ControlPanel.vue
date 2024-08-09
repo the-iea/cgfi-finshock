@@ -374,11 +374,6 @@ const help = (event: MouseEvent, id: string) => {
 					@focus="
 						store.selectedLiability = { from: store.selectedNode, to: i - 1 }
 					"
-					@blur="
-						() => {
-							store.selectedLiability = null
-						}
-					"
 				/>
 				<input
 					class="ui lmat"
@@ -389,11 +384,6 @@ const help = (event: MouseEvent, id: string) => {
 					v-model="store.liabilityMatrix[i - 1][store.selectedNode]"
 					@focus="
 						store.selectedLiability = { to: store.selectedNode, from: i - 1 }
-					"
-					@blur="
-						() => {
-							store.selectedLiability = null
-						}
 					"
 				/>
 			</div>
