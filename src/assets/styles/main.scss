@@ -61,3 +61,8 @@ button {
 button:hover {
 	background-color: darken($buttonColor, 10%);
 }
+
+.shepherd-content {
+	max-height: 100vh;
+	overflow-y: auto;
+}

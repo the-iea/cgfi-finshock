@@ -128,7 +128,7 @@ export const getTutorial = (
 		{
 			id: 'liabilities2',
 			title: 'Liabilities',
-			text: 'The selected arrow (the one outlined in white, which we looked at in the last step) is representing this liability, where bank 0 owes bank 1 €50',
+			text: 'The selected arrow (the one outlined in white, which we looked at in the last step) is representing this liability, where bank 0 owes bank 1 €50m',
 			attachTo: {
 				element: '#owes2',
 				on: 'left',
@@ -188,7 +188,7 @@ export const getTutorial = (
 		{
 			id: 'shock',
 			title: 'Shock',
-			text: 'Once the network has been configured, we can introduce a shock to the system. A shock is a sudden change in the value of a bank, which can have knock-on effects on the rest of the network. In this case, we are going to shock bank 0 with a value of €50.',
+			text: 'Once the network has been configured, we can introduce a shock to the system. A shock is a sudden change in the value of a bank, which can have knock-on effects on the rest of the network. In this case, we are going to shock bank 0 with a value of €50m.',
 			attachTo: {
 				element: '#shockControl',
 				on: 'left',

@@ -74,7 +74,7 @@ const helpSteps: { [key: string]: any } = {
 			text: 'The equity value of the selected bank at the current time step. The equity is the external assets plus the effective internal assets (i.e. assets owed to the selected bank by other banks in the network), minus the external liabilities and internal liabilities (i.e. assets owed to other banks). Importantly, the internal assets are multiplied by the effective value of the owing bank, to statistically account for the fact that a debt from a bankrupt organisation is worthless.',
 			attachTo: {
 				element: '#equityVal',
-				on: 'bottom',
+				on: 'left',
 			},
 			cancelIcon: {
 				enabled: true,
@@ -87,7 +87,7 @@ const helpSteps: { [key: string]: any } = {
 			text: 'The effective value of the selected bank at the current time step. This is a measure of how likely a bank is to be able to pay its current debts. All debts from a bank are multiplied by its effective value, which is calculated using the chosen valuation function. For further details on each function, see the help for the "Valuation Function" control.',
 			attachTo: {
 				element: '#valuationVal',
-				on: 'bottom',
+				on: 'left',
 			},
 			cancelIcon: {
 				enabled: true,
@@ -100,7 +100,7 @@ const helpSteps: { [key: string]: any } = {
 			text: 'The shock value applied to the selected bank. This is the amount of external assets the bank loses at the start of the simulation. It is this initial reduction of equity which determines how the model progresses.',
 			attachTo: {
 				element: '#shockControl',
-				on: 'bottom',
+				on: 'left',
 			},
 			cancelIcon: {
 				enabled: true,
@@ -113,7 +113,7 @@ const helpSteps: { [key: string]: any } = {
 			text: 'The amount of external assets the selected bank has. This is the amount of money the bank has in reserve, which is not owed to any other bank in the network.',
 			attachTo: {
 				element: '#extAssetsControl',
-				on: 'bottom',
+				on: 'left',
 			},
 			cancelIcon: {
 				enabled: true,
@@ -126,7 +126,7 @@ const helpSteps: { [key: string]: any } = {
 			text: 'The amount of external liabilities the selected bank has. This is the amount of money the bank owes to organisations which are external to the network.',
 			attachTo: {
 				element: '#extLiabilityControl',
-				on: 'bottom',
+				on: 'left',
 			},
 			cancelIcon: {
 				enabled: true,
@@ -136,11 +136,20 @@ const helpSteps: { [key: string]: any } = {
 	valueFunc: [
 		{
 			title: 'Valuation Function',
-			text: 'The valuation function used to calculate the effective value of a bank. The three options are:<ul><li>Distress: TODO: Simple description, plus description of parameters.</li><li>Merton: TODO: Simple description, plus description of parameters.</li><li>Black: TODO: Simple description, plus description of parameters.</li></ul>',
+			text: "The valuation function used to calculate the effective value of a bank. The three options are:<ul><li>Distress: Reevaluation is triggered by the firm's capital buffer and determined by a flexible beta distribution. If the firm's capital buffer (equity divided by total liabilities) under reevaluation is lower than its initial capital buffer, there is a decrease in valuation. The decrease is determined by a beta distribution (α and β parameters) and a recovery rate, representing firm operational risks. A lower recovery rate leads to a lower valuation.</li><li>Merton: Valuation is determined by the likelihood of default based on firm leverage, volatility, debt maturity and recovery rate (as in Distress). Reevaluation is triggered by a firm's equity relative to its external asset holdings. An increase in leverage and volatility increases its probability of default, decreasing the firm's valuation function.</li><li>Black: Like the Merton valuation function, valuation accounts for default before firm debt maturity. This leads to a lower valuation than Merton, which is also based on the firm's leverage, volatility and recovery rate.</li></ul>",
 			attachTo: {
 				element: '#valueFuncControl',
-				on: 'bottom',
+				on: 'left',
 			},
+			cancelIcon: {
+				enabled: true,
+			},
+		},
+	],
+	minDenMaxEnt: [
+		{
+			title: 'Minimum Density and Maximum Entropy',
+			text: "Matrix reconstruction methods are used when only partial information is known. In this context, the network can be represented as a matrix where partial information represents the row and column sums of the matrix. Using partial information and financial assumptions, we reconstruct a network which respects the partial information and assumptions. We provide methods for two approaches: <ul><li>Maximum Entropy – representing a fully interconnected network of firms' interbank assets and liabilities</li><li>Minimum Density – representing a probabilistic network where the number of network connections is minimised.</li></ul>These two methods have been applied to both a fragile and a stable balance sheet which can be pre-selected. Both networks will have the same initial set of equities, but the interbank assets and liabilities will differ.",
 			cancelIcon: {
 				enabled: true,
 			},
@@ -182,15 +191,21 @@ const help = (event: MouseEvent, id: string) => {
 				<div class="close" @click="store.choosingScenario = false">
 					<fa-icon icon="close"></fa-icon>
 				</div>
-				<button
-					@click="store.selectScenario(id as unknown as string)"
-					v-for="(scenario, id) in scenarios"
-				>
-					<!-- <button @click="help($event, `scenario-${id}`)" class="help">
+				<div v-for="(scenario, id) in scenarios" class="scenarioButton">
+					<button @click="store.selectScenario(id as unknown as string)">
+						{{ scenario.name }}
+					</button>
+					<button
+						v-if="
+							scenario.name.indexOf('Density') >= 0 ||
+							scenario.name.indexOf('Entropy') >= 0
+						"
+						@click="help($event, `minDenMaxEnt`)"
+						class="help"
+					>
 						?
-					</button> -->
-					{{ scenario.name }}
-				</button>
+					</button>
+				</div>
 			</div>
 		</div>
 		<div class="control">
@@ -519,6 +534,10 @@ const help = (event: MouseEvent, id: string) => {
 			padding-left: 0.5rem;
 			background-color: $bg;
 		}
+	}
+
+	.scenarioButton {
+		position: relative;
 	}
 
 	button.help {

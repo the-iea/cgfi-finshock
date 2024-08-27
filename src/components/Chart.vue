@@ -479,12 +479,27 @@ function drawLCAxes(resizing = false) {
 		.attr('class', 'axis')
 		.attr('transform', `translate(0, ${lineChartHeight.value})`)
 		.call(xAxis)
+		.append('text')
+		.attr('class', 'axis-label')
+		.attr('x', lineChartWidth.value / 2)
+		.attr('y', 32)
+		.text('Timestep')
 
 	const yAxis = d3
 		.axisLeft(lineEqScale.value)
 		.ticks(5)
 		.tickFormat(d3.format('.2s'))
-	axes.append('g').attr('class', 'axis').call(yAxis)
+
+	axes
+		.append('g')
+		.attr('class', 'axis')
+		.call(yAxis)
+		.append('text')
+		.attr('class', 'axis-label')
+		.attr('transform', 'rotate(-90)')
+		.attr('y', -40)
+		.attr('x', -lineChartHeight.value / 2)
+		.text('Equity')
 }
 
 function drawHighlight() {
@@ -728,6 +743,12 @@ onMounted(() => {
 				cursor: not-allowed;
 			}
 		}
+	}
+
+	.axis-label {
+		font-size: 0.75rem;
+		fill: white;
+		text-anchor: middle;
 	}
 }
 </style>
