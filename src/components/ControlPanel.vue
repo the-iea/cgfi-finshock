@@ -448,7 +448,7 @@ const help = (event: MouseEvent, id: string) => {
 .controls {
 	display: flex;
 	flex-direction: column;
-	overflow-y: scroll;
+	overflow-y: auto;
 	padding: 0.5rem;
 
 	#node {

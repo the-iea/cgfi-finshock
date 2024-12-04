@@ -30,6 +30,7 @@ onMounted(async () => {
 	display: flex;
 	flex-direction: row;
 	padding-bottom: $gap;
+	position: relative;
 
 	#chart {
 		flex: 1 1 70%;
@@ -38,6 +39,7 @@ onMounted(async () => {
 	#controls {
 		flex: 1 1 30%;
 		min-width: 25rem;
+		max-height: 100%;
 	}
 }
 </style>

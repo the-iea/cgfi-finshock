@@ -33,7 +33,8 @@
 @import '@/assets/styles/scssVars.scss';
 
 .footer {
-	padding-top: $gap/2;
+	// padding-top: $gap/2;
+	padding-bottom: $gap/2;
 	height: $footerHeight + $gap;
 	background-color: $bgContrast;
 	display: flex;
@@ -44,7 +45,7 @@
 	a {
 		height: $footerHeight - $gap;
 		img {
-			height: $footerHeight - $gap;
+			height: $footerHeight - 3 * $gap;
 		}
 	}
 }
